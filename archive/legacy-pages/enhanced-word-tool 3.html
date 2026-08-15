@@ -1,0 +1,2252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小学英语单词学习工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5', 
+                        secondary: '#10B981', 
+                        accent: '#F59E0B', 
+                        danger: '#EF4444', 
+                        grade1: '#F43F5E', 
+                        grade2: '#EC4899', 
+                        grade3: '#8B5CF6', 
+                        grade4: '#6366F1', 
+                        grade5: '#3B82F6', 
+                        grade6: '#22D3EE',
+                    },
+                    fontFamily: {
+                        game: ['"Comic Sans MS"', '"Marker Felt"', 'Arial', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .text-shadow { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); }
+            .card-hover { transition: all 0.3s ease; }
+            .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+            .screen-hidden { display: none !important; position: absolute; top: -9999px; left: -9999px; }
+            .btn-pulse { animation: pulse 2s infinite; }
+            .grade-badge { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; font-weight: bold; color: white; }
+            .word-card { height: 100%; display: flex; flex-direction: column; }
+            .word-card-content { flex: 1; }
+            .flip-card { perspective: 1000px; }
+            .flip-card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+            .flip-card-front, .flip-card-back { backface-visibility: hidden; }
+            .flip-card-back { transform: rotateY(180deg); }
+            .flipped .flip-card-inner { transform: rotateY(180deg); }
+            @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+            .progress-bar { height: 8px; border-radius: 4px; background-color: #E5E7EB; overflow: hidden; }
+            .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+            .slide-in { animation: slideIn 0.5s ease forwards; }
+            .slide-out { animation: slideOut 0.5s ease forwards; }
+            @keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+            @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-50px); opacity: 0; } }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen font-game text-gray-800 overflow-x-hidden">
+    <!-- 页面头部 -->
+    <header class="bg-primary text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center mb-3 md:mb-0">
+                <i class="fa fa-gamepad text-2xl mr-2"></i>
+                <h1 class="text-[clamp(1.2rem,3vw,1.8rem)] font-bold">小学英语单词学习工具</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center">
+                    <i class="fa fa-star text-accent mr-2"></i>
+                    <span class="font-semibold" id="score">得分: 0</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fa fa-clock-o text-accent mr-2"></i>
+                    <span class="font-semibold" id="timer">5:00</span>
+                </div>
+                <div id="word-source-indicator" class="hidden items-center bg-accent/20 text-white px-3 py-1 rounded-full text-sm">
+                    <i class="fa fa-database mr-1"></i>
+                    <span id="source-text">默认单词库</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 时间进度条 -->
+        <div class="w-full bg-primary/30 h-2 mt-1">
+            <div id="time-progress" class="bg-accent h-full transition-all duration-1000" style="width: 100%"></div>
+        </div>
+    </header>
+
+    <!-- 主区域 -->
+    <main class="container mx-auto px-4 py-8 relative min-h-[calc(100vh-130px)]">
+        <!-- 1. 主页面 -->
+        <div id="start-screen" class="text-center py-12">
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 transform transition-all duration-500 hover:scale-105">
+                <h2 class="text-[clamp(1.5rem,3vw,2rem)] text-primary font-bold mb-4">单词学习与挑战</h2>
+                <p class="text-gray-600 mb-6 text-lg">选择学习方式，提升英语单词能力！</p>
+                
+                <!-- 封面图片区域 -->
+                <div class="mb-8 rounded-xl overflow-hidden shadow-lg">
+                    <img src="https://picsum.photos/id/20/800/400" alt="英语单词学习" class="w-full h-48 md:h-64 object-cover">
+                </div>
+                
+                <!-- 年级选择 -->
+                <div class="mb-4">
+                    <label class="block text-left mb-2 font-medium">选择年级:</label>
+                    <select id="grade-select" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <option value="" disabled selected>请选择年级</option>
+                        <option value="grade1" data-color="grade1">一年级</option>
+                        <option value="grade2" data-color="grade2">二年级</option>
+                        <option value="grade3" data-color="grade3">三年级</option>
+                        <option value="grade4" data-color="grade4">四年级</option>
+                        <option value="grade5" data-color="grade5">五年级</option>
+                        <option value="grade6" data-color="grade6">六年级</option>
+                    </select>
+                </div>
+                
+                <!-- 难度选择 -->
+                <div class="mb-6">
+                    <label class="block text-left mb-2 font-medium">选择难度:</label>
+                    <select id="difficulty" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <option value="" disabled selected>请选择难度</option>
+                        <option value="easy">基础 (认识单词)</option>
+                        <option value="medium">进阶 (会写单词)</option>
+                        <option value="hard">挑战 (熟练运用)</option>
+                    </select>
+                </div>
+                
+                <!-- 学习设置面板 -->
+                <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-medium text-gray-700">学习设置</h3>
+                        <button id="toggle-settings-btn" class="text-primary hover:text-primary/80 text-sm">
+                            <i class="fa fa-cog mr-1"></i>展开
+                        </button>
+                    </div>
+                    
+                    <div id="settings-panel" class="hidden space-y-4">
+                        <div>
+                            <label class="block text-left mb-1 text-sm font-medium text-gray-600">单词数量:</label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="word-count-slider" min="5" max="50" value="10" class="flex-1">
+                                <span id="word-count-display" class="text-sm font-medium text-primary w-8">10</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>5个</span>
+                                <span>50个</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-left mb-1 text-sm font-medium text-gray-600">学习时间 (分钟):</label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="time-slider" min="3" max="30" value="5" class="flex-1">
+                                <span id="time-display" class="text-sm font-medium text-primary w-12">5分钟</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>3分钟</span>
+                                <span>30分钟</span>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-2 border-t border-gray-200">
+                            <button id="reset-settings-btn" class="text-xs text-gray-500 hover:text-gray-700">
+                                <i class="fa fa-refresh mr-1"></i>重置为默认
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 首页底部四个功能按钮 -->
+                <div class="grid grid-cols-2 gap-3 mb-0">
+                    <button id="learn-first-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-lg transform transition-all duration-300 hover:scale-105">
+                        <i class="fa fa-book mr-1"></i>卡片学习
+                    </button>
+                    <button id="direct-game-btn" class="bg-secondary hover:bg-secondary/90 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-lg transform transition-all duration-300 hover:scale-105">
+                        <i class="fa fa-gamepad mr-1"></i>开始游戏
+                    </button>
+                    <button id="analysis-btn" class="bg-accent hover:bg-accent/90 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-lg transform transition-all duration-300 hover:scale-105">
+                        <i class="fa fa-bar-chart mr-1"></i>数据分析
+                    </button>
+                    <button id="excel-upload-btn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-lg transform transition-all duration-300 hover:scale-105">
+                        <i class="fa fa-file-excel-o mr-1"></i>单词库管理
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Excel上传页面 -->
+        <div id="excel-upload-screen" class="screen-hidden">
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-[clamp(1.5rem,3vw,2rem)] text-primary font-bold">
+                        <i class="fa fa-file-excel-o text-accent mr-2"></i>单词库管理
+                    </h2>
+                    <button id="back-to-start-from-excel-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg shadow transition-all duration-300">
+                        <i class="fa fa-arrow-left mr-1"></i> 返回主页
+                    </button>
+                </div>
+                
+                <p class="text-gray-600 mb-6">管理您的单词库，支持上传自定义Excel单词表或使用系统默认单词库</p>
+                
+                <!-- 单词库状态提示 -->
+                <div id="word-source-status" class="mb-6 p-4 rounded-lg bg-primary/10 flex items-center">
+                    <i id="source-icon" class="fa fa-database text-primary text-xl mr-3"></i>
+                    <div>
+                        <div class="font-medium">当前使用: <span id="current-source" class="text-primary font-bold">默认单词库</span></div>
+                        <div class="text-sm text-gray-600">适用于1-6年级的标准英语单词</div>
+                    </div>
+                </div>
+                
+                <!-- Excel上传功能 -->
+                <div class="mb-8 p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors">
+                    <h3 class="text-lg font-bold mb-3 text-gray-800">上传自定义单词Excel</h3>
+                    <p class="text-sm text-gray-600 mb-4">支持1-6年级单词自定义，Excel需包含：年级、难度、中文、英文、图片链接、记忆方法</p>
+                    
+                    <!-- 当前选择显示 -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                        <div class="flex items-center text-sm text-blue-800">
+                            <i class="fa fa-info-circle mr-2"></i>
+                            <span>当前主页选择：<span id="current-selection-display" class="font-bold">五年级 - 进阶难度</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <input type="file" id="excel-upload" accept=".xlsx, .xls" class="hidden">
+                        <label for="excel-upload" class="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg cursor-pointer transition-colors shadow-md flex-1">
+                            <i class="fa fa-upload mr-2"></i>选择Excel文件
+                        </label>
+                        <button id="use-default-words" class="bg-gray-700 hover:bg-gray-800 text-white font-medium py-3 px-6 rounded-lg transition-colors shadow-md flex-1">
+                            <i class="fa fa-refresh mr-2"></i>使用默认单词库
+                        </button>
+                    </div>
+                    <div id="excel-upload-status" class="mt-4 p-4 rounded-lg text-sm font-medium hidden transition-all duration-300"></div>
+                </div>
+                
+                <div class="bg-gray-50 p-5 rounded-lg">
+                    <h3 class="font-bold mb-3 text-gray-800">Excel格式详细说明</h3>
+                    <ul class="text-sm text-gray-600 space-y-3">
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">表头顺序：</span>年级、难度、中文、英文、图片链接、记忆方法
+                                <div class="text-xs text-gray-500 mt-1">必须按此顺序，第一行为表头</div>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">年级填写：</span>数字1-6（对应一年级到六年级）
+                                <div class="text-xs text-gray-500 mt-1">示例：1, 2, 3, 4, 5, 6</div>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">难度填写：</span>easy(基础)、medium(进阶)、hard(挑战)
+                                <div class="text-xs text-gray-500 mt-1">必须使用英文：easy, medium, hard</div>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">中文英文：</span>必填项，不能为空
+                                <div class="text-xs text-gray-500 mt-1">示例：苹果, apple</div>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">图片链接：</span>可选，支持网络图片URL
+                                <div class="text-xs text-gray-500 mt-1">不填则使用随机默认图片</div>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">记忆方法：</span>建议填写，帮助记忆
+                                <div class="text-xs text-gray-500 mt-1">示例：拆分记忆：a-p-p-l-e</div>
+                            </div>
+                        </li>
+                        <li class="flex items-start bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                            <i class="fa fa-exclamation-triangle text-yellow-600 mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium text-yellow-800">重要提示：</span>上传的Excel数据会与主页选择的年级和难度进行匹配
+                                <div class="text-xs text-yellow-700 mt-1">只有匹配当前选择的年级和难度的单词才会被使用</div>
+                            </div>
+                        </li>
+                    </ul>
+                    
+                    <button id="download-template-btn" class="bg-secondary hover:bg-secondary/90 text-white font-medium py-2 px-4 rounded-lg transition-colors shadow-md w-full mt-4">
+                        <i class="fas fa-download mr-2"></i>下载Excel模板文件
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 卡片式单词学习页面（单卡片版） -->
+        <div id="preview-screen" class="screen-hidden">
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center">
+                        <h2 class="text-[clamp(1.3rem,3vw,1.8rem)] text-primary font-bold">
+                            <span id="preview-grade-badge" class="grade-badge mr-2 grade5">5</span>
+                            卡片式单词学习
+                        </h2>
+                        <span class="ml-2 bg-primary/10 text-primary text-xs py-1 px-2 rounded-full" id="preview-word-count">1/10</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="start-game-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-lg transform transition-all duration-300 hover:scale-105 btn-pulse">
+                            <i class="fa fa-gamepad mr-1"></i>开始游戏
+                        </button>
+                        <button id="back-to-start-from-preview-btn" class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium py-2 px-3 rounded-lg shadow transition-all duration-300">
+                            <i class="fa fa-home mr-1"></i> 主页
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="text-gray-600 mb-4 text-sm">点击喇叭听发音，点击卡片可翻转查看更多信息，使用左右方向键翻页</p>
+                
+                <!-- 单卡片式单词容器 -->
+                <div id="single-word-card" class="flip-card w-full mb-6">
+                    <div class="flip-card-inner relative w-full h-[320px]">
+                        <!-- 卡片正面 -->
+                        <div class="flip-card-front absolute inset-0 bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col">
+                            <div class="relative flex-1">
+                                <img id="preview-word-image" src="https://picsum.photos/id/102/800/600" alt="单词图片" class="w-full h-full object-contain rounded-t-2xl max-h-[250px]">
+                                <button id="card-pronounce-btn" class="absolute top-4 right-4 bg-white/80 hover:bg-white text-accent rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all">
+                                    <i class="fa fa-volume-up text-xl"></i>
+                                </button>
+                                <button id="card-edit-image-btn" class="absolute top-4 left-4 bg-white/80 hover:bg-white text-primary rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all">
+                                    <i class="fa fa-pencil text-xl"></i>
+                                </button>
+                                <!-- 单词中英文显示在图片上 -->
+                                <div class="absolute bottom-4 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-center">
+                                    <h3 id="preview-english-word" class="text-2xl font-bold text-white mb-1">apple</h3>
+                                    <p id="preview-chinese-word" class="text-lg text-white/90">苹果</p>
+                                </div>
+                            </div>
+                            <div class="text-center py-2 text-sm text-gray-500">
+                                <i class="fa fa-refresh mr-1"></i> 点击卡片查看记忆方法
+                            </div>
+                        </div>
+                        
+                        <!-- 卡片背面 -->
+                        <div class="flip-card-back absolute inset-0 bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col">
+                            <div class="p-4">
+                                <h3 class="text-xl font-bold text-primary mb-3 text-center">记忆方法</h3>
+                                <div id="preview-memory-tip" class="bg-gray-50 p-4 rounded-xl text-gray-700 text-base">
+                                    拆分记忆：a-p-p-l-e，联想：一个（a）苹果放在盘子（p-p）里，像小灯笼（l-e）
+                                </div>
+                            </div>
+                            <div class="mt-auto text-center pb-3 text-sm text-gray-500">
+                                <i class="fa fa-refresh mr-1"></i> 点击卡片返回单词
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 翻页控制按钮 -->
+                <div class="flex justify-between items-center mb-2">
+                    <button id="prev-word-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-3 rounded-lg shadow transition-all duration-300 flex items-center opacity-70 text-sm">
+                        <i class="fa fa-arrow-left mr-1"></i> 上一个
+                    </button>
+                    <button id="next-word-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-3 rounded-lg shadow transition-all duration-300 flex items-center text-sm">
+                        下一个 <i class="fa fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 游戏界面 -->
+        <div id="game-screen" class="screen-hidden">
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                <!-- 操作按钮 -->
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center">
+                        <span id="game-grade-badge" class="grade-badge mr-2 grade5">5</span>
+                        <button id="back-to-start-from-game-btn" class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium py-2 px-3 rounded-lg shadow transition-all duration-300">
+                            <i class="fa fa-home mr-1"></i> 主页
+                        </button>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="study-now-btn" class="bg-accent hover:bg-accent/90 text-white text-sm font-medium py-2 px-3 rounded-lg shadow transition-all duration-300">
+                            <i class="fa fa-book mr-1"></i> 卡片复习
+                        </button>
+                        <button id="analysis-from-game-btn" class="bg-accent/80 hover:bg-accent text-white text-sm font-medium py-2 px-3 rounded-lg shadow transition-all duration-300">
+                            <i class="fa fa-bar-chart mr-1"></i> 数据分析
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 中文提示区域 -->
+                <div class="bg-primary/10 rounded-xl p-6 mb-8 text-center relative">
+                    <button id="game-pronounce-btn" class="absolute top-4 right-4 bg-white/80 hover:bg-white text-accent rounded-full w-10 h-10 flex items-center justify-center shadow transition-all">
+                        <i class="fa fa-volume-up"></i>
+                    </button>
+                    <h2 class="text-lg md:text-xl text-gray-700 mb-3">请输入对应的英文单词</h2>
+                    <div id="chinese-word" class="text-[clamp(2rem,6vw,3.5rem)] font-bold text-primary">
+                        苹果
+                    </div>
+                </div>
+                
+                <!-- 输入区域 -->
+                <div class="mb-8">
+                    <div class="flex">
+                        <input type="text" id="answer" class="flex-1 px-5 py-4 text-xl border-2 border-gray-300 rounded-l-lg focus:outline-none focus:border-primary transition-all duration-300 shadow-sm" placeholder="在这里输入英文单词..." autocomplete="off">
+                        <button id="submit-btn" class="bg-primary hover:bg-primary/90 text-white px-6 py-4 rounded-r-lg font-bold transition-all duration-300">
+                            <i class="fa fa-check"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 答题记录（记录对错） -->
+                <div id="answer-record" class="hidden mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div class="text-sm text-gray-600">
+                        <span class="font-medium">答题记录:</span>
+                        <span id="record-text">第一次答题 - 正确</span>
+                    </div>
+                </div>
+                
+                <!-- 提示和反馈区域 -->
+                <div id="feedback" class="hidden mb-6 p-4 rounded-lg text-center text-lg"></div>
+                
+                <!-- 进度和提示 -->
+                <div class="flex justify-between items-center text-gray-600 mb-4">
+                    <div>
+                        <button id="hint-btn" class="text-accent hover:underline flex items-center">
+                            <i class="fa fa-question-circle mr-1"></i> 需要提示?
+                        </button>
+                        <span id="hint" class="hidden text-sm text-gray-500 mt-1 block">提示: 开头字母是 "a"</span>
+                    </div>
+                    <div class="font-medium">
+                        <span id="word-count">进度: 1/10</span>
+                    </div>
+                </div>
+                
+                <!-- 完成进度条 -->
+                <div class="mt-2 bg-gray-200 rounded-full h-2.5">
+                    <div id="completion-progress" class="bg-secondary h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="text-right text-sm text-gray-500 mt-1">
+                    <span id="progress-text">完成度: 0%</span>
+                </div>
+            </div>
+            
+            <!-- 已学单词列表 -->
+            <div class="mt-8 max-w-3xl mx-auto">
+                <h3 class="text-lg font-bold text-gray-700 mb-3 flex items-center">
+                    <i class="fa fa-list-ul text-primary mr-2"></i>已完成单词
+                </h3>
+                <div id="words-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    <!-- 动态添加已完成单词卡片 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. 游戏结束页面 -->
+        <div id="end-screen" class="screen-hidden">
+            <div class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
+                <div id="result-icon" class="text-6xl mb-4 text-center btn-pulse">
+                    <i class="fa fa-trophy text-accent"></i>
+                </div>
+                
+                <div class="flex items-center justify-center mb-2">
+                    <span id="end-grade-badge" class="grade-badge mr-2 grade5">5</span>
+                    <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-center text-primary" id="result-title">太棒了！挑战完成！</h2>
+                </div>
+                <p class="text-xl text-gray-600 mb-6 text-center" id="result-message">你在5分钟内完成了所有10个单词</p>
+                
+                <!-- 详细统计信息 -->
+                <div class="bg-gray-100 rounded-lg p-5 mb-8 space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">最终得分:</span>
+                        <span id="final-score" class="font-bold text-primary text-xl">90分</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">正确率:</span>
+                        <span id="accuracy" class="font-bold text-primary">90%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">正确数/总数:</span>
+                        <span id="correct-count" class="font-bold text-primary">9/10</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">首次答错数:</span>
+                        <span id="first-wrong-count" class="font-bold text-danger">1</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">用时:</span>
+                        <span id="used-time" class="font-bold text-primary">3分45秒</span>
+                    </div>
+                </div>
+                
+                <!-- 按钮排版 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                    <button id="restart-game-btn" class="bg-secondary hover:bg-secondary/90 text-white font-bold py-3 px-4 rounded-full text-base shadow-lg transform transition-all duration-300 hover:scale-105">
+                        <i class="fa fa-refresh mr-2"></i>再玩一次
+                    </button>
+                    <button id="new-game-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-full text-base shadow-lg transform transition-all duration-300 hover:scale-105">
+                        <i class="fa fa-random mr-2"></i>新单词游戏
+                    </button>
+                    <button id="back-to-study-btn" class="bg-accent hover:bg-accent/90 text-white font-bold py-3 px-4 rounded-full text-base shadow-lg transform transition-all duration-300 hover:scale-105">
+                        <i class="fa fa-book mr-2"></i>卡片复习
+                    </button>
+                    <button id="go-to-analysis-btn" class="bg-accent/80 hover:bg-accent text-white font-bold py-3 px-4 rounded-full text-base shadow-lg transform transition-all duration-300 hover:scale-105">
+                        <i class="fa fa-bar-chart mr-2"></i>看数据分析
+                    </button>
+                </div>
+                
+                <button id="back-to-start-from-end-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-full text-base shadow transition-all duration-300">
+                    <i class="fa fa-home mr-2"></i>返回主页面
+                </button>
+            </div>
+        </div>
+
+        <!-- 6. 数据分析页面 -->
+        <div id="analysis-screen" class="screen-hidden">
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-[clamp(1.5rem,3vw,2rem)] text-primary font-bold">
+                        <i class="fa fa-bar-chart text-accent mr-2"></i>学习数据分析
+                    </h2>
+                    <button id="back-to-start-from-analysis-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg shadow transition-all duration-300">
+                        <i class="fa fa-home mr-1"></i> 返回主页
+                    </button>
+                </div>
+                
+                <!-- 数据概览卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="bg-primary/5 rounded-xl p-5 shadow card-hover">
+                        <div class="flex items-center mb-3">
+                            <i class="fa fa-calendar-check-o text-primary text-2xl mr-3"></i>
+                            <h3 class="text-lg font-bold text-gray-800">总学习次数</h3>
+                        </div>
+                        <p class="text-3xl font-bold text-primary" id="total-studies">0</p>
+                        <p class="text-sm text-gray-500 mt-1">累计学习单词数: <span id="total-words-count">0</span> 个</p>
+                    </div>
+                    <div class="bg-secondary/5 rounded-xl p-5 shadow card-hover">
+                        <div class="flex items-center mb-3">
+                            <i class="fa fa-line-chart text-secondary text-2xl mr-3"></i>
+                            <h3 class="text-lg font-bold text-gray-800">平均正确率</h3>
+                        </div>
+                        <p class="text-3xl font-bold text-secondary" id="avg-accuracy">0%</p>
+                        <p class="text-sm text-gray-500 mt-1">最高正确率: <span id="max-accuracy">0%</span></p>
+                    </div>
+                    <div class="bg-danger/5 rounded-xl p-5 shadow card-hover">
+                        <div class="flex items-center mb-3">
+                            <i class="fa fa-exclamation-triangle text-danger text-2xl mr-3"></i>
+                            <h3 class="text-lg font-bold text-gray-800">需加强单词</h3>
+                        </div>
+                        <p class="text-3xl font-bold text-danger" id="weak-words-count">0</p>
+                        <p class="text-sm text-gray-500 mt-1">首次答错单词: <span id="first-wrong-words-count">0</span> 个</p>
+                    </div>
+                </div>
+                
+                <!-- 各年级掌握情况 -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fa fa-graduation-cap text-primary mr-2"></i>各年级掌握情况
+                    </h3>
+                    <div id="grade-mastery" class="space-y-4">
+                        <div class="grade-mastery-item">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center">
+                                    <span class="grade-badge mr-2 grade1">1</span>
+                                    <span class="font-medium">一年级</span>
+                                </div>
+                                <span class="text-sm font-medium" id="grade1-accuracy">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-grade1" id="grade1-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="grade-mastery-item">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center">
+                                    <span class="grade-badge mr-2 grade2">2</span>
+                                    <span class="font-medium">二年级</span>
+                                </div>
+                                <span class="text-sm font-medium" id="grade2-accuracy">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-grade2" id="grade2-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="grade-mastery-item">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center">
+                                    <span class="grade-badge mr-2 grade3">3</span>
+                                    <span class="font-medium">三年级</span>
+                                </div>
+                                <span class="text-sm font-medium" id="grade3-accuracy">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-grade3" id="grade3-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="grade-mastery-item">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center">
+                                    <span class="grade-badge mr-2 grade4">4</span>
+                                    <span class="font-medium">四年级</span>
+                                </div>
+                                <span class="text-sm font-medium" id="grade4-accuracy">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-grade4" id="grade4-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="grade-mastery-item">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center">
+                                    <span class="grade-badge mr-2 grade5">5</span>
+                                    <span class="font-medium">五年级</span>
+                                </div>
+                                <span class="text-sm font-medium" id="grade5-accuracy">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-grade5" id="grade5-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="grade-mastery-item">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center">
+                                    <span class="grade-badge mr-2 grade6">6</span>
+                                    <span class="font-medium">六年级</span>
+                                </div>
+                                <span class="text-sm font-medium" id="grade6-accuracy">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-grade6" id="grade6-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 首次答错但后续答对的单词 -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fa fa-lightbulb-o text-accent mr-2"></i>需加强的单词（首次答错）
+                    </h3>
+                    <div id="first-wrong-words" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                        <div class="text-center text-gray-500 py-8 col-span-full" id="no-first-wrong-words">
+                            <i class="fa fa-check-circle text-3xl mb-2 text-secondary"></i>
+                            <p>暂无首次答错的单词，继续保持！</p>
+                        </div>
+                        <!-- 动态生成首次答错单词卡片 -->
+                    </div>
+                </div>
+                
+                <!-- 最近学习记录 -->
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fa fa-history text-primary mr-2"></i>最近学习记录
+                    </h3>
+                    <div id="recent-records" class="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="text-center text-gray-500 py-8" id="no-records">
+                            <i class="fa fa-calendar-o text-3xl mb-2"></i>
+                            <p>暂无学习记录，开始你的第一次挑战吧！</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 薄弱单词统计 -->
+                <div class="mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fa fa-exclamation-triangle text-danger mr-2"></i>高频错误单词
+                    </h3>
+                    <div id="weak-words" class="flex flex-wrap gap-2">
+                        <span class="text-gray-500 text-sm">暂无薄弱单词记录</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 自定义图片模态框 -->
+        <div id="image-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 screen-hidden">
+            <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-primary">自定义单词图片</h3>
+                    <button id="close-modal-btn" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-4">为单词" <span id="modal-word-name" class="font-medium text-primary"></span> "上传或输入图片链接</p>
+                <input type="hidden" id="modal-word-index">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-medium text-gray-700">上传图片</label>
+                        <input type="file" id="custom-image-upload" accept="image/*" class="w-full p-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-medium text-gray-700">或输入图片链接</label>
+                        <input type="url" id="image-url-input" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button id="cancel-image-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg">
+                            取消
+                        </button>
+                        <button id="save-image-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg">
+                            保存图片
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-4 mt-10">
+        <div class="container mx-auto px-4 text-center text-sm">
+            <p>小学英语单词学习工具 © 2024 | 支持自定义单词库与卡片式学习</p>
+            <p class="text-gray-400 mt-1">精准记忆·数据分析·个性化学习</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. 单词数据库（含精准记忆方法）
+        const defaultWordDatabase = {
+            grade1: {
+                easy: [
+                    { chinese: "苹果", english: "apple", image: "https://picsum.photos/id/102/800/600", memoryTip: "拆分记忆：a-p-p-l-e，联想：一个（a）苹果放在盘子（p-p）里，像小灯笼（l-e）" },
+                    { chinese: "香蕉", english: "banana", image: "https://picsum.photos/id/1080/800/600", memoryTip: "谐音记忆：“不拿拿”，香蕉太滑拿不住；拼写：ba-na-na，重复na很易记" },
+                    { chinese: "猫", english: "cat", image: "https://picsum.photos/id/40/800/600", memoryTip: "发音记忆：cat发音像“凯特”，小猫叫凯特；拼写：c-a-t，三个字母简单记" },
+                    { chinese: "狗", english: "dog", image: "https://picsum.photos/id/237/800/600", memoryTip: "联想记忆：小狗（dog）喜欢叼骨头（d像骨头，o像嘴巴，g像尾巴）" },
+                    { chinese: "一", english: "one", image: "https://picsum.photos/id/188/800/600", memoryTip: "形状记忆：o像数字0，n像数字1，e像数字1，合起来1个0+1+1=1" },
+                    { chinese: "二", english: "two", image: "https://picsum.photos/id/287/800/600", memoryTip: "谐音记忆：“兔”，兔子有两只耳朵；拼写：t-w-o，像两只耳朵（w）" },
+                    { chinese: "三", english: "three", image: "https://picsum.photos/id/225/800/600", memoryTip: "拆分记忆：th-ree，th像数字3的形状，ree像“瑞”，三个瑞雪" },
+                    { chinese: "红色", english: "red", image: "https://picsum.photos/id/1060/800/600", memoryTip: "联想记忆：太阳（red）升起，r像太阳，e像眼睛，d像地面" },
+                    { chinese: "蓝色", english: "blue", image: "https://picsum.photos/id/1059/800/600", memoryTip: "谐音记忆：“布鲁”，布鲁的天空是蓝色；拼写：b-l-u-e，简单四字母" },
+                    { chinese: "绿色", english: "green", image: "https://picsum.photos/id/106/800/600", memoryTip: "联想记忆：小草（green）是绿色，g像小草，r-e-e-n，三个e像小草" }
+                ],
+                medium: [
+                    { chinese: "黄色", english: "yellow", image: "https://picsum.photos/id/1061/800/600", memoryTip: "联想记忆：黄色（yellow）的太阳，y像阳光，e-l-l-o-w像阳光四射" },
+                    { chinese: "黑色", english: "black", image: "https://picsum.photos/id/1055/800/600", memoryTip: "拆分记忆：b-l-a-c-k，b像黑夜，l-a-c-k像“lack（缺少）”光" },
+                    { chinese: "白色", english: "white", image: "https://picsum.photos/id/1063/800/600", memoryTip: "联想记忆：白色（white）的雪花，w-h-i-t-e像雪花飘落" },
+                    { chinese: "男孩", english: "boy", image: "https://picsum.photos/id/1074/800/600", memoryTip: "发音记忆：“波伊”，男孩叫波伊；拼写：b-o-y，三个字母简单记" },
+                    { chinese: "女孩", english: "girl", image: "https://picsum.photos/id/1077/800/600", memoryTip: "联想记忆：女孩（girl）喜欢礼物（g像礼物，i-r-l像“爱礼物”）" },
+                    { chinese: "学校", english: "school", image: "https://picsum.photos/id/20/800/600", memoryTip: "拆分记忆：s-c-h-o-o-l，s像校门，c-h像操场，o-o像窗户" },
+                    { chinese: "老师", english: "teacher", image: "https://picsum.photos/id/1066/800/600", memoryTip: "词根记忆：teach（教）+er（人），教书的人就是老师" },
+                    { chinese: "学生", english: "student", image: "https://picsum.photos/id/1062/800/600", memoryTip: "联想记忆：student（学生）在study（学习），s-t-u-d-e-n-t" },
+                    { chinese: "朋友", english: "friend", image: "https://picsum.photos/id/1071/800/600", memoryTip: "谐音记忆：“富润的”，朋友之间互相帮助变得富有" },
+                    { chinese: "家庭", english: "family", image: "https://picsum.photos/id/1082/800/600", memoryTip: "联想记忆：f-a-m-i-l-y，家（family）有爸爸和妈妈（m和f）" }
+                ],
+                hard: []
+            },
+            grade2: {
+                easy: [
+                    { chinese: "书", english: "book", image: "https://picsum.photos/id/24/800/600", memoryTip: "形状记忆：b和k像书的封面，oo像书页，合起来是一本打开的书" },
+                    { chinese: "笔", english: "pen", image: "https://picsum.photos/id/1025/800/600", memoryTip: "发音记忆：pen发音像“喷”，钢笔能喷墨；拼写：p-e-n，三字母简单记" },
+                    { chinese: "书包", english: "schoolbag", image: "https://picsum.photos/id/1058/800/600", memoryTip: "组合记忆：school（学校）+bag（包），上学用的包就是书包" },
+                    { chinese: "眼睛", english: "eye", image: "https://picsum.photos/id/1062/800/600", memoryTip: "形状记忆：两个e像两只眼睛，y像鼻子，合起来是脸的样子" },
+                    { chinese: "耳朵", english: "ear", image: "https://picsum.photos/id/1062/800/600", memoryTip: "谐音记忆：“耳”，直接对应耳朵；拼写：e-a-r，三字母对应耳的形状" },
+                    { chinese: "鼻子", english: "nose", image: "https://picsum.photos/id/1062/800/600", memoryTip: "联想记忆：鼻子（nose）能闻味道，n像鼻子，o像鼻孔，s-e像呼吸" },
+                    { chinese: "嘴巴", english: "mouth", image: "https://picsum.photos/id/1062/800/600", memoryTip: "拆分记忆：m-o-u-t-h，m像嘴巴，o像张开的嘴，u-t-h像牙齿" },
+                    { chinese: "手", english: "hand", image: "https://picsum.photos/id/1062/800/600", memoryTip: "联想记忆：手（hand）能做事，h像手指，a-n-d像“和”，手和我们一起做事" },
+                    { chinese: "脚", english: "foot", image: "https://picsum.photos/id/1062/800/600", memoryTip: "形状记忆：f-o-o-t，两个o像两只脚，t像脚趾，合起来是脚的样子" },
+                    { chinese: "学校", english: "school", image: "https://picsum.photos/id/20/800/600", memoryTip: "拆分记忆：s-c-h-o-o-l，s像校门，c-h像操场，o-o像窗户，l像旗杆" }
+                ],
+                medium: [],
+                hard: []
+            },
+            grade3: { easy: [], medium: [], hard: [] },
+            grade4: { easy: [], medium: [], hard: [] },
+            grade5: { 
+                easy: [
+                    { chinese: "电脑", english: "computer", image: "https://picsum.photos/id/180/800/600", memoryTip: "发音记忆：“肯普优特”，电脑的英文发音；拆分：com-pu-ter" },
+                    { chinese: "电话", english: "telephone", image: "https://picsum.photos/id/160/800/600", memoryTip: "词根记忆：tele（远）+phone（声音），传递远方声音的设备" },
+                    { chinese: "家庭作业", english: "homework", image: "https://picsum.photos/id/20/800/600", memoryTip: "组合记忆：home（家）+work（工作），在家做的工作就是作业" },
+                    { chinese: "图书馆", english: "library", image: "https://picsum.photos/id/24/800/600", memoryTip: "联想记忆：图书馆有很多书（book），lib-rar-y" },
+                    { chinese: "教室", english: "classroom", image: "https://picsum.photos/id/36/800/600", memoryTip: "组合记忆：class（班级）+room（房间），班级上课的房间" },
+                    { chinese: "铅笔", english: "pencil", image: "https://picsum.photos/id/1025/800/600", memoryTip: "发音记忆：“潘修”，铅笔的发音；拼写：pen-cil，pen是笔" },
+                    { chinese: "橡皮", english: "eraser", image: "https://picsum.photos/id/1025/800/600", memoryTip: "词根记忆：erase（擦除）+r，能擦除的东西" },
+                    { chinese: "尺子", english: "ruler", image: "https://picsum.photos/id/1025/800/600", memoryTip: "词根记忆：rule（规则/尺子）+r，测量用的尺子" },
+                    { chinese: "学校", english: "school", image: "https://picsum.photos/id/20/800/600", memoryTip: "联想记忆：s像校门，c像操场，h像教学楼，oo像窗户" },
+                    { chinese: "老师", english: "teacher", image: "https://picsum.photos/id/1066/800/600", memoryTip: "词根记忆：teach（教）+er（人），教书的人" }
+                ], 
+                medium: [], 
+                hard: [] 
+            },
+            grade6: { easy: [], medium: [], hard: [] }
+        };
+
+        // 2. 全局变量
+        const STORAGE_KEY = 'englishWordStudyRecords';
+        let currentGrade = 'grade5';
+        let currentDifficulty = 'medium';
+        let currentGradeText = ' ';
+        let gameWords = [];
+        let totalWords = 10; // 改为可配置的变量
+        let customWordDatabase = null; // 存储自定义Excel单词库
+        let wordAnswerRecords = []; // 记录每个单词的答题情况（首次是否答错）
+        let currentPreviewIndex = 0; // 单卡片学习时的当前索引
+
+        // 游戏状态变量
+        let currentWordIndex = 0;
+        let score = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let firstWrongCount = 0; // 首次答错数量
+        let timeLeft = 300; // 改为可配置的变量
+        let timerInterval;
+        let usedHints = 0;
+        let gameStarted = false;
+        let initialTime = 300; // 改为可配置的变量
+        let currentRecord = null;
+        let currentWordSource = 'default'; // 'default' 或 'custom'
+
+        // 3. DOM元素获取
+        const startScreen = document.getElementById('start-screen');
+        const excelUploadScreen = document.getElementById('excel-upload-screen');
+        const previewScreen = document.getElementById('preview-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const analysisScreen = document.getElementById('analysis-screen');
+        const imageModal = document.getElementById('image-modal');
+        
+        // Excel上传相关元素
+        const excelUpload = document.getElementById('excel-upload');
+        const excelUploadStatus = document.getElementById('excel-upload-status');
+        const useDefaultWords = document.getElementById('use-default-words');
+        const excelUploadBtn = document.getElementById('excel-upload-btn');
+        const backToStartFromExcelBtn = document.getElementById('back-to-start-from-excel-btn');
+        const wordSourceIndicator = document.getElementById('word-source-indicator');
+        const sourceText = document.getElementById('source-text');
+        const wordSourceStatus = document.getElementById('word-source-status');
+        const currentSource = document.getElementById('current-source');
+        const sourceIcon = document.getElementById('source-icon');
+        
+        // 自定义图片相关元素
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const cancelImageBtn = document.getElementById('cancel-image-btn');
+        const saveImageBtn = document.getElementById('save-image-btn');
+        const customImageUpload = document.getElementById('custom-image-upload');
+        const imageUrlInput = document.getElementById('image-url-input');
+        const modalWordName = document.getElementById('modal-word-name');
+        const modalWordIndex = document.getElementById('modal-word-index');
+        const cardEditImageBtn = document.getElementById('card-edit-image-btn');
+        
+        // 单卡片学习相关元素
+        const singleWordCard = document.getElementById('single-word-card');
+        const previewWordImage = document.getElementById('preview-word-image');
+        const previewEnglishWord = document.getElementById('preview-english-word');
+        const previewChineseWord = document.getElementById('preview-chinese-word');
+        const previewMemoryTip = document.getElementById('preview-memory-tip');
+        const previewWordCount = document.getElementById('preview-word-count');
+        const prevWordBtn = document.getElementById('prev-word-btn');
+        const nextWordBtn = document.getElementById('next-word-btn');
+        const cardPronounceBtn = document.getElementById('card-pronounce-btn');
+        
+        // 年级相关元素
+        const gradeSelect = document.getElementById('grade-select');
+        const previewGradeBadge = document.getElementById('preview-grade-badge');
+        const gameGradeBadge = document.getElementById('game-grade-badge');
+        const endGradeBadge = document.getElementById('end-grade-badge');
+        
+        // 数据分析相关元素
+        const analysisBtn = document.getElementById('analysis-btn');
+        const analysisFromGameBtn = document.getElementById('analysis-from-game-btn');
+        const goToAnalysisBtn = document.getElementById('go-to-analysis-btn');
+        const backToStartFromAnalysisBtn = document.getElementById('back-to-start-from-analysis-btn');
+        const totalStudiesEl = document.getElementById('total-studies');
+        const totalWordsCountEl = document.getElementById('total-words-count');
+        const avgAccuracyEl = document.getElementById('avg-accuracy');
+        const maxAccuracyEl = document.getElementById('max-accuracy');
+        const weakWordsCountEl = document.getElementById('weak-words-count');
+        const firstWrongWordsCountEl = document.getElementById('first-wrong-words-count');
+        const recentRecordsEl = document.getElementById('recent-records');
+        const noRecordsEl = document.getElementById('no-records');
+        const weakWordsEl = document.getElementById('weak-words');
+        const firstWrongWordsEl = document.getElementById('first-wrong-words');
+        const noFirstWrongWordsEl = document.getElementById('no-first-wrong-words');
+        const firstWrongCountEl = document.getElementById('first-wrong-count');
+        const answerRecordEl = document.getElementById('answer-record');
+        const recordTextEl = document.getElementById('record-text');
+
+        // 4. 初始化函数
+        function init() {
+            // 绑定所有事件
+            bindEvents();
+            // 初始化年级信息
+            updateGradeInfo();
+            // 初始化学习设置
+            initStudySettings();
+            // 加载历史记录
+            loadStudyRecords();
+            // 初始化单词库（默认）
+            initWordDatabase();
+            // 初始化单词来源显示
+            updateWordSourceDisplay();
+        }
+
+        // 5. 事件绑定
+        function bindEvents() {
+            // Excel上传页面相关事件
+            excelUploadBtn.addEventListener('click', goToExcelUploadScreen);
+            backToStartFromExcelBtn.addEventListener('click', goToStartScreen);
+            
+            // Excel上传处理事件
+            excelUpload.addEventListener('change', function(e) {
+                console.log('文件选择事件触发:', {
+                    files: e.target.files,
+                    fileCount: e.target.files.length
+                });
+                
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    console.log('选择的文件详情:', {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        lastModified: new Date(file.lastModified).toLocaleString()
+                    });
+                    handleExcelUpload(e);
+                } else {
+                    console.log('文件选择被取消或失败');
+                }
+                
+                // 重要：重置文件输入，避免相同文件无法重新选择
+                setTimeout(() => {
+                    excelUpload.value = '';
+                    console.log('文件输入已重置');
+                }, 100);
+            });
+            useDefaultWords.addEventListener('click', useDefaultWordDatabase);
+            
+            // 自定义图片事件
+            cardEditImageBtn.addEventListener('click', () => {
+                if (gameWords.length === 0) {
+                    alert('请先选择单词库进行学习');
+                    return;
+                }
+                openImageModal(currentPreviewIndex);
+            });
+            closeModalBtn.addEventListener('click', closeImageModal);
+            cancelImageBtn.addEventListener('click', closeImageModal);
+            saveImageBtn.addEventListener('click', saveCustomImage);
+            customImageUpload.addEventListener('change', handleImageUpload);
+            
+            // 单卡片学习翻页事件
+            prevWordBtn.addEventListener('click', showPreviousWord);
+            nextWordBtn.addEventListener('click', showNextWord);
+            // 键盘左右键翻页
+            document.addEventListener('keydown', (e) => {
+                if (previewScreen.classList.contains('screen-hidden')) return;
+                
+                if (e.key === 'ArrowLeft') {
+                    showPreviousWord();
+                } else if (e.key === 'ArrowRight') {
+                    showNextWord();
+                }
+            });
+            
+            // 卡片翻转事件
+            singleWordCard.addEventListener('click', function(e) {
+                // 排除按钮区域的点击
+                if (!e.target.closest('button')) {
+                    // 确保有有效的单词数据
+                    if (gameWords.length > 0 && currentPreviewIndex < gameWords.length) {
+                        this.classList.toggle('flipped');
+                        console.log('卡片翻转状态:', this.classList.contains('flipped') ? '背面' : '正面');
+                    } else {
+                        console.log('无法翻转卡片：无效的单词数据');
+                    }
+                }
+            });
+            
+            // 卡片发音按钮
+            cardPronounceBtn.addEventListener('click', function() {
+                if (gameWords.length > 0 && currentPreviewIndex < gameWords.length) {
+                    const word = gameWords[currentPreviewIndex];
+                    pronounceWord(word.english);
+                }
+            });
+            
+            // 主页面按钮
+            document.getElementById('learn-first-btn').addEventListener('click', learnFirst);
+            document.getElementById('direct-game-btn').addEventListener('click', startDirectly);
+            
+            // 学习页面按钮
+            document.getElementById('start-game-btn').addEventListener('click', startGame);
+            document.getElementById('back-to-start-from-preview-btn').addEventListener('click', goToStartScreen);
+            
+            // 游戏页面按钮
+            document.getElementById('back-to-start-from-game-btn').addEventListener('click', goToStartScreen);
+            document.getElementById('study-now-btn').addEventListener('click', () => {
+                hideAllScreens();
+                showPreviewScreen();
+            });
+            document.getElementById('submit-btn').addEventListener('click', checkAnswer);
+            document.getElementById('hint-btn').addEventListener('click', showHint);
+            
+            // 结束页面按钮
+            document.getElementById('restart-game-btn').addEventListener('click', () => {
+                initGame(false);
+                startGame();
+            });
+            document.getElementById('new-game-btn').addEventListener('click', () => {
+                initGame(true);
+                startGame();
+            });
+            document.getElementById('back-to-study-btn').addEventListener('click', () => {
+                hideAllScreens();
+                showPreviewScreen();
+            });
+            document.getElementById('back-to-start-from-end-btn').addEventListener('click', goToStartScreen);
+            
+            // 输入框回车提交
+            document.getElementById('answer').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') checkAnswer();
+            });
+            
+            // 年级选择事件
+            gradeSelect.addEventListener('change', updateGradeInfo);
+            document.getElementById('difficulty').addEventListener('change', function() {
+                currentDifficulty = this.value;
+            });
+            
+            // 数据分析相关事件
+            analysisBtn.addEventListener('click', goToAnalysisScreen);
+            analysisFromGameBtn.addEventListener('click', goToAnalysisScreen);
+            goToAnalysisBtn.addEventListener('click', goToAnalysisScreen);
+            backToStartFromAnalysisBtn.addEventListener('click', goToStartScreen);
+            
+            // 初始化当前选择显示
+        updateCurrentSelectionDisplay();
+        
+        // 添加难度选择事件监听器
+        document.getElementById('difficulty').addEventListener('change', function() {
+            currentDifficulty = this.value;
+            updateCurrentSelectionDisplay();
+        });
+        
+        // 下载Excel模板功能
+        document.getElementById('download-template-btn').addEventListener('click', function() {
+            // 创建示例数据
+            const templateData = [
+                ['年级', '难度', '中文', '英文', '图片链接', '记忆方法'],
+                ['5', 'medium', '苹果', 'apple', '', '拆分记忆：a-p-p-l-e'],
+                ['5', 'medium', '香蕉', 'banana', '', '联想：香蕉像月牙'],
+                ['5', 'medium', '橙子', 'orange', '', '颜色记忆：橙色orange'],
+                ['5', 'medium', '葡萄', 'grape', '', '形状记忆：一串葡萄'],
+                ['5', 'medium', '西瓜', 'watermelon', '', 'water(水) + melon(瓜)']
+            ];
+            
+            // 创建工作簿
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "单词模板");
+            
+            // 下载文件
+            XLSX.writeFile(wb, "单词模板.xlsx");
+        });
+        }
+
+        // 处理Excel上传
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                console.log('没有选择文件');
+                return;
+            }
+            
+            console.log('开始处理Excel文件:', {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: new Date(file.lastModified).toLocaleString()
+            });
+            
+            // 检查文件大小（限制10MB）
+            if (file.size > 10 * 1024 * 1024) {
+                excelUploadStatus.textContent = '⚠️ 文件过大，请选择小于10MB的Excel文件';
+                excelUploadStatus.className = 'mt-4 p-4 rounded-lg text-sm font-medium bg-yellow-50 border border-yellow-200 text-yellow-800';
+                excelUploadStatus.classList.remove('hidden');
+                return;
+            }
+            
+            // 更可靠的文件类型检查
+            const fileName = file.name.toLowerCase();
+            const isExcelFile = fileName.endsWith('.xlsx') || fileName.endsWith('.xls') || 
+                               file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                               file.type === 'application/vnd.ms-excel';
+            
+            if (!isExcelFile) {
+                console.log('文件类型检查失败:', {
+                    fileName: file.name,
+                    fileType: file.type,
+                    fileSize: file.size
+                });
+                excelUploadStatus.textContent = '⚠️ 请上传Excel文件（.xlsx或.xls格式）';
+                excelUploadStatus.className = 'mt-4 p-4 rounded-lg text-sm font-medium bg-yellow-50 border border-yellow-200 text-yellow-800';
+                excelUploadStatus.classList.remove('hidden');
+                return;
+            }
+            
+            // 更新当前选择显示
+            updateCurrentSelectionDisplay();
+            
+            // 显示上传状态
+            excelUploadStatus.textContent = '⏳ 正在读取文件...';
+            excelUploadStatus.className = 'mt-4 p-4 rounded-lg text-sm font-medium bg-blue-50 border border-blue-200 text-blue-800';
+            excelUploadStatus.classList.remove('hidden');
+            
+            // 处理完成后重置文件输入
+            const resetFileInput = () => {
+                setTimeout(() => {
+                    excelUpload.value = '';
+                    console.log('文件输入已重置（处理完成后）');
+                }, 1000);
+            };
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    console.log('文件读取成功，开始解析...');
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    console.log('工作表列表:', workbook.SheetNames);
+                    
+                    // 假设第一个工作表是单词数据
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // 转换为JSON，表头需包含：年级、难度、中文、英文、图片链接、记忆方法
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: ['grade', 'difficulty', 'chinese', 'english', 'image', 'memoryTip'] });
+                    
+                    console.log('原始数据:', jsonData);
+                    
+                    // 移除表头行
+                    jsonData.shift();
+                    
+                    console.log('移除表头后的数据:', jsonData);
+                    
+                    // 验证数据格式
+                    const validData = jsonData.filter((item, index) => {
+                        const isValid = item.grade && item.difficulty && item.chinese && item.english;
+                        if (!isValid) {
+                            console.log(`第${index + 2}行无效数据:`, item);
+                            console.log(`缺失字段: 年级=${item.grade}, 难度=${item.difficulty}, 中文=${item.chinese}, 英文=${item.english}`);
+                        }
+                        return isValid;
+                    });
+                    
+                    console.log('有效数据数量:', validData.length);
+                    
+                    if (validData.length === 0) {
+                        let errorMsg = 'Excel文件中无有效单词数据，请检查以下要求：\n\n';
+                        errorMsg += '1. 确保Excel文件包含表头：年级、难度、中文、英文、图片链接、记忆方法\n';
+                        errorMsg += '2. 表头必须位于第一行\n';
+                        errorMsg += '3. 年级列填写数字（1-6）\n';
+                        errorMsg += '4. 难度列填写英文（easy/medium/hard）\n';
+                        errorMsg += '5. 中文和英文列不能为空\n\n';
+                        errorMsg += '建议先下载模板文件查看正确格式。';
+                        throw new Error(errorMsg);
+                    }
+                    
+                    // 构建自定义单词数据库
+                    customWordDatabase = {};
+                    let totalProcessed = 0;
+                    let skippedItems = 0;
+                    
+                    validData.forEach((item, index) => {
+                        try {
+                            const gradeKey = `grade${item.grade}`;
+                            if (!customWordDatabase[gradeKey]) {
+                                customWordDatabase[gradeKey] = { easy: [], medium: [], hard: [] };
+                            }
+                            const difficultyKey = item.difficulty.toLowerCase();
+                            if (!['easy', 'medium', 'hard'].includes(difficultyKey)) {
+                                console.log(`跳过第${index+1}行：无效难度值 ${item.difficulty}`);
+                                skippedItems++;
+                                return;
+                            }
+                            customWordDatabase[gradeKey][difficultyKey].push({
+                                chinese: item.chinese,
+                                english: item.english,
+                                image: item.image || `https://picsum.photos/id/${Math.floor(Math.random() * 200)}/800/600`,
+                                memoryTip: item.memoryTip || `记忆技巧：${item.english} 对应 ${item.chinese}`
+                            });
+                            totalProcessed++;
+                        } catch (err) {
+                            console.log(`处理第${index+1}行时出错:`, err);
+                            skippedItems++;
+                        }
+                    });
+                    
+                    console.log('构建的数据库:', customWordDatabase);
+                    console.log(`总共处理: ${totalProcessed}, 跳过: ${skippedItems}`);
+                    
+                    // 显示上传成功信息，包含所有年级和难度的统计
+                    let totalWords = 0;
+                    let gradeStats = {};
+                    
+                    Object.keys(customWordDatabase).forEach(grade => {
+                        gradeStats[grade] = { easy: 0, medium: 0, hard: 0, total: 0 };
+                        ['easy', 'medium', 'hard'].forEach(diff => {
+                            const count = customWordDatabase[grade][diff].length;
+                            gradeStats[grade][diff] = count;
+                            gradeStats[grade].total += count;
+                            totalWords += count;
+                        });
+                    });
+                    
+                    console.log('上传统计:', gradeStats);
+                    console.log('总单词数:', totalWords);
+                    
+                    // 更新单词来源
+                    currentWordSource = 'custom';
+                    updateWordSourceDisplay();
+                    
+                    // 提示上传成功，显示详细的年级和难度统计
+                    let successMessage = `✅ 上传成功！共导入 ${totalWords} 个单词\n\n`;
+                    successMessage += '各年级分布：\n';
+                    
+                    Object.keys(gradeStats).forEach(grade => {
+                        if (gradeStats[grade].total > 0) {
+                            const gradeNum = grade.replace('grade', '');
+                            successMessage += `${gradeNum}年级：${gradeStats[grade].total}个（基础${gradeStats[grade].easy}，进阶${gradeStats[grade].medium}，挑战${gradeStats[grade].hard}）\n`;
+                        }
+                    });
+                    
+                    successMessage += '\n现在可以根据首页选择的年级和难度自动匹配相应的单词！';
+                    
+                    excelUploadStatus.textContent = successMessage;
+                excelUploadStatus.className = 'mt-4 p-4 rounded-lg text-sm font-medium bg-green-50 border border-green-200 text-green-800 whitespace-pre-line';
+                excelUploadStatus.classList.remove('hidden');
+                
+                // 成功处理后重置文件输入
+                resetFileInput();
+                    
+                    // 初始化单词库
+                    initWordDatabase();
+                    
+                } catch (error) {
+            console.error('Excel处理错误:', error);
+            excelUploadStatus.textContent = `❌ 上传失败：${error.message}`;
+            excelUploadStatus.className = 'mt-4 p-4 rounded-lg text-sm font-medium bg-red-50 border border-red-200 text-red-800';
+            excelUploadStatus.classList.remove('hidden');
+            
+            // 错误处理后也重置文件输入
+            resetFileInput();
+        }
+            };
+            
+            reader.onerror = function(e) {
+                console.error('文件读取错误:', e);
+                excelUploadStatus.textContent = '❌ 文件读取失败，请重试';
+                excelUploadStatus.className = 'mt-4 p-4 rounded-lg text-sm font-medium bg-red-50 border border-red-200 text-red-800';
+                excelUploadStatus.classList.remove('hidden');
+                
+                // 读取错误后也重置文件输入
+                resetFileInput();
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 使用默认单词库
+        function useDefaultWordDatabase() {
+            customWordDatabase = null;
+            currentWordSource = 'default';
+            updateWordSourceDisplay();
+            initWordDatabase();
+            excelUploadStatus.textContent = '✅ 已切换到默认单词库';
+            excelUploadStatus.className = 'mt-4 p-4 rounded-lg text-sm font-medium bg-blue-50 border border-blue-200 text-blue-800';
+            excelUploadStatus.classList.remove('hidden');
+            excelUpload.value = ''; // 清空上传文件
+        }
+
+        // 更新单词来源显示
+        function updateWordSourceDisplay() {
+            if (currentWordSource === 'custom') {
+                sourceText.textContent = '本地上传单词库';
+                currentSource.textContent = '本地上传单词库';
+                sourceIcon.className = 'fa fa-upload text-primary text-xl mr-3';
+                wordSourceIndicator.classList.remove('hidden');
+                wordSourceIndicator.classList.add('flex');
+            } else {
+                sourceText.textContent = '默认单词库';
+                currentSource.textContent = '默认单词库';
+                sourceIcon.className = 'fa fa-database text-primary text-xl mr-3';
+                wordSourceIndicator.classList.remove('hidden');
+                wordSourceIndicator.classList.add('flex');
+            }
+        }
+
+        // 初始化单词库
+        function initWordDatabase() {
+            // 根据是否有自定义库选择使用哪个库
+            if (customWordDatabase) {
+                window.wordDatabase = customWordDatabase;
+            } else {
+                window.wordDatabase = defaultWordDatabase;
+            }
+        }
+
+        // 自定义图片处理
+        function openImageModal(index) {
+            if (index < 0 || index >= gameWords.length) return;
+            
+            const word = gameWords[index];
+            modalWordName.textContent = `${word.chinese} (${word.english})`;
+            modalWordIndex.value = index;
+            imageUrlInput.value = word.image;
+            customImageUpload.value = '';
+            
+            imageModal.classList.remove('screen-hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImageModal() {
+            imageModal.classList.add('screen-hidden');
+            document.body.style.overflow = '';
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件');
+                return;
+            }
+            
+            // 图片压缩处理
+            const img = new Image();
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            img.onload = function() {
+                // 设置压缩后的尺寸（最大宽度400px，保持宽高比）
+                const maxWidth = 400;
+                const maxHeight = 300;
+                let width = img.width;
+                let height = img.height;
+                
+                // 计算压缩比例
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+                if (height > maxHeight) {
+                    width = (maxHeight / height) * width;
+                    height = maxHeight;
+                }
+                
+                // 设置canvas尺寸
+                canvas.width = width;
+                canvas.height = height;
+                
+                // 绘制压缩后的图片
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // 转换为base64（质量0.8）
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // 显示压缩信息
+                const originalSize = (file.size / 1024).toFixed(2);
+                const compressedSize = (compressedDataUrl.length * 0.75 / 1024).toFixed(2);
+                console.log(`图片压缩: ${originalSize}KB → ${compressedSize}KB`);
+                
+                // 设置压缩后的图片
+                imageUrlInput.value = compressedDataUrl;
+                
+                // 清理
+                canvas.remove();
+            };
+            
+            img.onerror = function() {
+                alert('图片加载失败，请选择其他图片');
+            };
+            
+            // 读取原始图片
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveCustomImage() {
+            const index = parseInt(modalWordIndex.value);
+            const imageUrl = imageUrlInput.value.trim();
+            
+            if (index >= 0 && index < gameWords.length && imageUrl) {
+                // 更新单词图片
+                gameWords[index].image = imageUrl;
+                
+                // 如果是当前显示的单词，更新UI
+                if (index === currentPreviewIndex) {
+                    previewWordImage.src = imageUrl;
+                }
+                
+                // 提示成功
+                alert('图片保存成功！');
+                closeImageModal();
+            } else {
+                alert('请输入有效的图片链接');
+            }
+        }
+
+        // 学习设置相关函数
+        function initStudySettings() {
+            const wordCountSlider = document.getElementById('word-count-slider');
+            const timeSlider = document.getElementById('time-slider');
+            const wordCountDisplay = document.getElementById('word-count-display');
+            const timeDisplay = document.getElementById('time-display');
+            const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
+            const settingsPanel = document.getElementById('settings-panel');
+            const resetSettingsBtn = document.getElementById('reset-settings-btn');
+            
+            // 更新显示值
+            function updateSettingsDisplay() {
+                const wordCount = parseInt(wordCountSlider.value);
+                const timeMinutes = parseInt(timeSlider.value);
+                
+                wordCountDisplay.textContent = wordCount;
+                timeDisplay.textContent = timeMinutes + '分钟';
+                
+                // 更新全局变量
+                totalWords = wordCount;
+                timeLeft = timeMinutes * 60;
+                initialTime = timeMinutes * 60;
+                
+                console.log(`学习设置更新: ${wordCount}个单词, ${timeMinutes}分钟`);
+            }
+            
+            // 绑定滑块事件
+            wordCountSlider.addEventListener('input', updateSettingsDisplay);
+            timeSlider.addEventListener('input', updateSettingsDisplay);
+            
+            // 展开/收起设置面板
+            toggleSettingsBtn.addEventListener('click', function() {
+                const isHidden = settingsPanel.classList.contains('hidden');
+                if (isHidden) {
+                    settingsPanel.classList.remove('hidden');
+                    this.innerHTML = '<i class="fa fa-cog mr-1"></i>收起';
+                } else {
+                    settingsPanel.classList.add('hidden');
+                    this.innerHTML = '<i class="fa fa-cog mr-1"></i>展开';
+                }
+            });
+            
+            // 重置设置
+            resetSettingsBtn.addEventListener('click', function() {
+                wordCountSlider.value = 10;
+                timeSlider.value = 5;
+                updateSettingsDisplay();
+                alert('设置已重置为默认值: 10个单词, 5分钟');
+            });
+            
+            // 初始化显示
+            updateSettingsDisplay();
+        }
+
+        // 7. 年级信息更新
+        function updateGradeInfo() {
+            // 检查是否选择了有效的年级
+            if (!gradeSelect.value) {
+                alert('请先选择年级');
+                return;
+            }
+            
+            currentGrade = gradeSelect.value;
+            currentDifficulty = document.getElementById('difficulty').value;
+            
+            // 检查是否选择了有效的难度
+            if (!currentDifficulty) {
+                alert('请先选择难度');
+                return;
+            }
+            
+            // 年级信息映射
+            const gradeMap = {
+                grade1: { text: '一年级', badgeClass: 'grade1' },
+                grade2: { text: '二年级', badgeClass: 'grade2' },
+                grade3: { text: '三年级', badgeClass: 'grade3' },
+                grade4: { text: '四年级', badgeClass: 'grade4' },
+                grade5: { text: '五年级', badgeClass: 'grade5' },
+                grade6: { text: '六年级', badgeClass: 'grade6' }
+            };
+            
+            const gradeInfo = gradeMap[currentGrade];
+            currentGradeText = gradeInfo.text;
+            
+            // 更新各界面年级徽章
+            const gradeNumber = currentGrade.replace('grade', '');
+            previewGradeBadge.className = `grade-badge mr-2 ${gradeInfo.badgeClass}`;
+            gameGradeBadge.className = `grade-badge mr-2 ${gradeInfo.badgeClass}`;
+            endGradeBadge.className = `grade-badge mr-2 ${gradeInfo.badgeClass}`;
+            previewGradeBadge.textContent = gradeNumber;
+            gameGradeBadge.textContent = gradeNumber;
+            endGradeBadge.textContent = gradeNumber;
+            
+            // 更新当前选择显示
+            updateCurrentSelectionDisplay();
+        }
+        
+        // 更新当前选择显示
+        function updateCurrentSelectionDisplay() {
+            const currentSelectionDisplay = document.getElementById('current-selection-display');
+            if (currentSelectionDisplay) {
+                const gradeMap = {
+                    grade1: '一年级', grade2: '二年级', grade3: '三年级',
+                    grade4: '四年级', grade5: '五年级', grade6: '六年级'
+                };
+                const difficultyMap = {
+                    easy: '基础', medium: '进阶', hard: '挑战'
+                };
+                currentSelectionDisplay.textContent = `${gradeMap[currentGrade]} - ${difficultyMap[currentDifficulty]}`;
+            }
+        }
+        
+        // 获取当前年级文本
+        function getCurrentGradeText() {
+            const gradeMap = {
+                grade1: '一年级', grade2: '二年级', grade3: '三年级',
+                grade4: '四年级', grade5: '五年级', grade6: '六年级'
+            };
+            return gradeMap[currentGrade] || currentGrade;
+        }
+
+        // 8. 游戏初始化（包含答题记录）
+        function initGame(generateNewWords = true) {
+            currentWordIndex = 0;
+            currentPreviewIndex = 0;
+            score = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            firstWrongCount = 0;
+            // 使用配置的时间设置
+            timeLeft = initialTime;
+            usedHints = 0;
+            wordAnswerRecords = []; // 重置答题记录
+            document.getElementById('words-list').innerHTML = '';
+            
+            // 初始化答题记录数组 - 使用实际单词数量而不是固定的totalWords
+            const actualWordCount = gameWords.length || totalWords;
+            for (let i = 0; i < actualWordCount; i++) {
+                wordAnswerRecords.push({
+                    answered: false,
+                    firstCorrect: true,
+                    attemptCount: 0
+                });
+            }
+            
+            // 更新UI
+            document.getElementById('score').textContent = `得分: ${score}`;
+            updateTimerDisplay();
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('hint').classList.add('hidden');
+            document.getElementById('timer').classList.remove('text-danger');
+            answerRecordEl.classList.add('hidden');
+            updateProgressDisplay();
+
+            // 生成当前年级和难度的单词
+            if (generateNewWords || gameWords.length === 0) {
+                // 检查是否选择了有效的年级和难度
+                if (!currentGrade || !currentDifficulty) {
+                    alert('请先选择年级和难度');
+                    goToStartScreen();
+                    return;
+                }
+                
+                const gradeWords = window.wordDatabase[currentGrade][currentDifficulty] || [];
+                if (gradeWords.length === 0) {
+                    alert(`当前年级难度下没有单词，请选择其他年级或难度`);
+                    goToStartScreen();
+                    return;
+                }
+                
+                // 如果单词数量不足，使用实际可用的单词数量
+                const availableWords = Math.min(totalWords, gradeWords.length);
+            
+            // 确保totalWords与实际gameWords数量一致
+            totalWords = availableWords;
+                if (gradeWords.length < totalWords) {
+                    console.log(`当前年级难度下单词数量不足，使用${availableWords}个单词而不是${totalWords}个`);
+                }
+                
+                // 洗牌算法确保无重复
+                const shuffledWords = [...gradeWords].sort(() => 0.5 - Math.random());
+                gameWords = shuffledWords.slice(0, availableWords);
+            }
+
+            // 初始化当前学习记录
+            currentRecord = {
+                grade: currentGrade,
+                gradeText: currentGradeText,
+                difficulty: currentDifficulty,
+                difficultyText: getDifficultyText(),
+                startTime: new Date().toISOString(),
+                words: JSON.parse(JSON.stringify(gameWords)), // 深拷贝
+                wordAnswerRecords: JSON.parse(JSON.stringify(wordAnswerRecords)), // 记录答题情况
+                score: 0,
+                correctCount: 0,
+                wrongCount: 0,
+                firstWrongCount: 0,
+                totalCount: gameWords.length, // 使用实际的单词数量
+                accuracy: 0,
+                usedTime: 0,
+                finishTime: null,
+                status: 'in-progress',
+                source: currentWordSource
+            };
+
+            // 更新进度显示
+            document.getElementById('word-count').textContent = `进度: ${currentWordIndex + 1}/${gameWords.length}`;
+        }
+
+        // 9. 难度文字转换
+        function getDifficultyText() {
+            const difficultyMap = {
+                easy: '基础',
+                medium: '进阶',
+                hard: '挑战'
+            };
+            return difficultyMap[currentDifficulty] || '基础';
+        }
+
+        // 10. 显示卡片学习页面（单卡片版）
+        function showPreviewScreen() {
+            // 检查是否选择了有效的年级和难度
+            if (!currentGrade || !currentDifficulty) {
+                alert('请先选择年级和难度');
+                return;
+            }
+            
+            // 确保有单词数据
+            if (gameWords.length === 0) {
+                initGame();
+            }
+            
+            // 显示当前卡片
+            showCurrentPreviewWord();
+            
+            // 更新按钮状态
+            updatePreviewButtons();
+            
+            // 显示学习页面
+            hideAllScreens();
+            previewScreen.classList.remove('screen-hidden');
+        }
+        
+        // 显示当前预览单词
+        function showCurrentPreviewWord() {
+            if (currentPreviewIndex < 0 || currentPreviewIndex >= gameWords.length) {
+                console.log('索引超出范围:', currentPreviewIndex, '单词总数:', gameWords.length);
+                return;
+            }
+            
+            const word = gameWords[currentPreviewIndex];
+            
+            // 验证图片链接
+            let imageUrl = word.image;
+            if (!imageUrl || imageUrl.trim() === '') {
+                console.log('图片链接为空，使用默认图片:', word.english);
+                imageUrl = 'https://via.placeholder.com/800x600/4F46E5/FFFFFF?text=' + encodeURIComponent(word.english);
+            }
+            
+            // 添加图片加载错误处理
+            previewWordImage.onerror = function() {
+                console.log('图片加载失败，使用默认图片:', word.english, '原链接:', imageUrl);
+                this.src = 'https://via.placeholder.com/800x600/4F46E5/FFFFFF?text=' + encodeURIComponent(word.english);
+            };
+            
+            previewWordImage.src = imageUrl;
+            previewWordImage.alt = `${word.chinese}的图片`;
+            previewEnglishWord.textContent = word.english;
+            previewChineseWord.textContent = word.chinese;
+            previewMemoryTip.textContent = word.memoryTip;
+            previewWordCount.textContent = `${currentPreviewIndex + 1}/${gameWords.length}`;
+            
+            // 确保卡片是正面朝上
+            singleWordCard.classList.remove('flipped');
+            
+            // 自动朗读当前单词
+            setTimeout(() => {
+                pronounceWord(word.english);
+            }, 300); // 延迟300ms朗读，让页面切换更自然
+            
+            console.log('显示单词:', word.english, '索引:', currentPreviewIndex, '图片链接:', imageUrl);
+        }
+        
+        // 显示上一个单词
+        function showPreviousWord() {
+            console.log('尝试上一个单词，当前索引:', currentPreviewIndex);
+            
+            if (currentPreviewIndex > 0) {
+                currentPreviewIndex--;
+                console.log('切换到索引:', currentPreviewIndex);
+                showCurrentPreviewWord();
+                updatePreviewButtons();
+            } else {
+                console.log('已经是第一个单词');
+            }
+        }
+        
+        // 显示下一个单词
+        function showNextWord() {
+            console.log('尝试下一个单词，当前索引:', currentPreviewIndex, '总数:', gameWords.length);
+            
+            if (currentPreviewIndex < gameWords.length - 1) {
+                currentPreviewIndex++;
+                console.log('切换到索引:', currentPreviewIndex);
+                showCurrentPreviewWord();
+                updatePreviewButtons();
+            } else {
+                console.log('已经是最后一个单词，循环回到第一个');
+                // 到达最后一个单词时，自动循环回到第一个单词
+                currentPreviewIndex = 0;
+                showCurrentPreviewWord();
+                updatePreviewButtons();
+            }
+        }
+        
+        // 更新预览按钮状态
+        function updatePreviewButtons() {
+            // 上一个按钮状态
+            if (currentPreviewIndex === 0) {
+                prevWordBtn.disabled = true;
+                prevWordBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                prevWordBtn.disabled = false;
+                prevWordBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            
+            // 下一个按钮状态 - 现在总是可用，支持循环
+            nextWordBtn.disabled = false;
+            nextWordBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        // 11. 开始卡片学习
+        function learnFirst() {
+            // 检查是否选择了有效的年级和难度
+            if (!currentGrade || !currentDifficulty) {
+                alert('请先选择年级和难度');
+                return;
+            }
+            
+            initGame();
+            showPreviewScreen();
+        }
+
+        // 直接开始游戏
+        function startDirectly() {
+            // 检查是否选择了有效的年级和难度
+            if (!currentGrade || !currentDifficulty) {
+                alert('请先选择年级和难度');
+                return;
+            }
+            
+            initGame();
+            startGame();
+        }
+
+        // 12. 开始游戏
+        function startGame() {
+            hideAllScreens();
+            gameScreen.classList.remove('screen-hidden');
+            
+            // 显示当前单词
+            showCurrentWord();
+            
+            // 开始计时
+            if (!gameStarted) {
+                gameStarted = true;
+                startTimer();
+            }
+            
+            // 清空输入框
+            document.getElementById('answer').value = '';
+            document.getElementById('answer').focus();
+        }
+
+        // 显示当前单词
+        function showCurrentWord() {
+            if (currentWordIndex >= gameWords.length) {
+                endGame();
+                return;
+            }
+            
+            // 自动朗读当前单词
+            setTimeout(() => {
+                pronounceWord(gameWords[currentWordIndex].english);
+            }, 300);
+            
+            const currentWord = gameWords[currentWordIndex];
+            document.getElementById('chinese-word').textContent = currentWord.chinese;
+            document.getElementById('word-count').textContent = `进度: ${currentWordIndex + 1}/${gameWords.length}`;
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('hint').classList.add('hidden');
+            document.getElementById('answer').value = '';
+            document.getElementById('answer').focus();
+            
+            // 检查是否有答题记录
+            if (wordAnswerRecords[currentWordIndex].answered) {
+                answerRecordEl.classList.remove('hidden');
+                if (wordAnswerRecords[currentWordIndex].firstCorrect) {
+                    recordTextEl.textContent = `首次答题 - 正确 (尝试${wordAnswerRecords[currentWordIndex].attemptCount}次)`;
+                } else {
+                    recordTextEl.textContent = `首次答题 - 错误 (尝试${wordAnswerRecords[currentWordIndex].attemptCount}次)`;
+                }
+            } else {
+                answerRecordEl.classList.add('hidden');
+            }
+        }
+
+        // 13. 检查答案
+        function checkAnswer() {
+            const answerInput = document.getElementById('answer');
+            const userAnswer = answerInput.value.trim().toLowerCase();
+            const currentWord = gameWords[currentWordIndex];
+            const feedbackEl = document.getElementById('feedback');
+            
+            // 记录尝试次数
+            wordAnswerRecords[currentWordIndex].attemptCount++;
+            
+            if (userAnswer === currentWord.english.toLowerCase()) {
+                // 答案正确
+                correctCount++;
+                score += 10 - usedHints; // 提示会扣分
+                feedbackEl.textContent = `正确！${currentWord.english} 的意思是 ${currentWord.chinese}`;
+                feedbackEl.className = 'p-4 rounded-lg text-center text-lg bg-green-50 text-green-700 border border-green-200';
+                
+                // 如果是首次回答正确，记录
+                if (!wordAnswerRecords[currentWordIndex].answered) {
+                    wordAnswerRecords[currentWordIndex].answered = true;
+                    wordAnswerRecords[currentWordIndex].firstCorrect = true;
+                }
+                
+                // 添加到已完成列表
+                addToCompletedList(currentWord, true);
+                
+                // 延迟进入下一题
+                setTimeout(() => {
+                    currentWordIndex++;
+                    usedHints = 0;
+                    updateProgressDisplay();
+                    showCurrentWord();
+                }, 1200);
+            } else {
+                // 答案错误
+                wrongCount++;
+                feedbackEl.textContent = `错误！正确答案是 ${currentWord.english}`;
+                feedbackEl.className = 'p-4 rounded-lg text-center text-lg bg-red-50 text-red-700 border border-red-200';
+                
+                // 如果是首次回答错误，记录
+                if (!wordAnswerRecords[currentWordIndex].answered) {
+                    wordAnswerRecords[currentWordIndex].answered = true;
+                    wordAnswerRecords[currentWordIndex].firstCorrect = false;
+                    firstWrongCount++; // 首次答错计数增加
+                }
+                
+                // 延迟清空输入框
+                setTimeout(() => {
+                    answerInput.value = '';
+                    answerInput.focus();
+                }, 1500);
+            }
+            
+            // 更新分数
+            document.getElementById('score').textContent = `得分: ${score}`;
+            feedbackEl.classList.remove('hidden');
+        }
+
+        // 添加到已完成列表
+        function addToCompletedList(word, isCorrect) {
+            const wordsListEl = document.getElementById('words-list');
+            const wordEl = document.createElement('div');
+            wordEl.className = `rounded-lg p-2 text-center text-sm ${isCorrect ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;
+            wordEl.innerHTML = `
+                <div class="font-bold">${word.english}</div>
+                <div class="text-xs">${word.chinese}</div>
+            `;
+            wordsListEl.appendChild(wordEl);
+        }
+
+        // 14. 显示提示
+        function showHint() {
+            if (usedHints >= 3) {
+                alert('提示次数已用完！');
+                return;
+            }
+            
+            const currentWord = gameWords[currentWordIndex];
+            const hintEl = document.getElementById('hint');
+            usedHints++;
+            
+            if (usedHints === 1) {
+                hintEl.textContent = `提示: 开头字母是 "${currentWord.english[0].toUpperCase()}"`;
+            } else if (usedHints === 2) {
+                const lengthHint = currentWord.english.length;
+                hintEl.textContent = `提示: 单词长度为 ${lengthHint} 个字母`;
+            } else {
+                const maskedWord = currentWord.english.split('').map((char, index) => 
+                    index < 2 ? char : '_'
+                ).join('');
+                hintEl.textContent = `提示: 前两个字母是 "${maskedWord}"`;
+            }
+            
+            hintEl.classList.remove('hidden');
+        }
+
+        // 15. 计时器功能
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                // 更新时间进度条
+                const percentage = (timeLeft / initialTime) * 100;
+                document.getElementById('time-progress').style.width = `${percentage}%`;
+                
+                // 时间不足时警告
+                if (timeLeft <= 60) {
+                    document.getElementById('timer').classList.add('text-danger');
+                }
+                
+                // 时间到结束游戏
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // 更新计时器显示
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+        }
+
+        // 更新进度显示
+        function updateProgressDisplay() {
+            const progress = (currentWordIndex / gameWords.length) * 100;
+            document.getElementById('completion-progress').style.width = `${progress}%`;
+            document.getElementById('progress-text').textContent = `完成度: ${Math.round(progress)}%`;
+        }
+
+        // 16. 结束游戏
+        function endGame() {
+            clearInterval(timerInterval);
+            gameStarted = false;
+            
+            // 保存学习记录
+            saveStudyRecord();
+            
+            // 更新结束页面信息
+            document.getElementById('final-score').textContent = `${score}分`;
+            
+            const accuracy = Math.round((correctCount / gameWords.length) * 100);
+            document.getElementById('accuracy').textContent = `${accuracy}%`;
+            
+            document.getElementById('correct-count').textContent = `${correctCount}/${gameWords.length}`;
+            document.getElementById('first-wrong-count').textContent = firstWrongCount;
+            
+            // 格式化用时
+            const usedTime = initialTime - timeLeft;
+            const usedMinutes = Math.floor(usedTime / 60);
+            const usedSeconds = usedTime % 60;
+            document.getElementById('used-time').textContent = `${usedMinutes}分${usedSeconds < 10 ? '0' + usedSeconds : usedSeconds}秒`;
+            
+            // 根据得分显示不同信息
+            const resultTitle = document.getElementById('result-title');
+            const resultMessage = document.getElementById('result-message');
+            const resultIcon = document.getElementById('result-icon');
+            
+            if (accuracy === 100) {
+                resultTitle.textContent = '太棒了！满分！';
+                resultMessage.textContent = `你在${usedMinutes}分${usedSeconds}秒内完美完成了所有单词`;
+                resultIcon.innerHTML = '<i class="fa fa-trophy text-accent"></i>';
+            } else if (accuracy >= 80) {
+                resultTitle.textContent = '非常好！';
+                resultMessage.textContent = `你的正确率达到了${accuracy}%，继续努力！`;
+                resultIcon.innerHTML = '<i class="fa fa-star text-yellow-500"></i>';
+            } else if (accuracy >= 60) {
+                resultTitle.textContent = '做得不错！';
+                resultMessage.textContent = `你的正确率是${accuracy}%，再试一次会更好！`;
+                resultIcon.innerHTML = '<i class="fa fa-check-circle text-green-500"></i>';
+            } else {
+                resultTitle.textContent = '继续加油！';
+                resultMessage.textContent = `你的正确率是${accuracy}%，建议再复习一下单词`;
+                resultIcon.innerHTML = '<i class="fa fa-thumbs-up text-blue-500"></i>';
+            }
+            
+            // 显示结束页面
+            hideAllScreens();
+            endScreen.classList.remove('screen-hidden');
+        }
+
+        // 17. 历史记录相关函数
+        function loadStudyRecords() {
+            const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            updateAnalysisData(records);
+            return records;
+        }
+
+        function saveStudyRecord() {
+            if (!currentRecord) return;
+            
+            // 完善记录信息
+            currentRecord.score = score;
+            currentRecord.correctCount = correctCount;
+            currentRecord.wrongCount = wrongCount;
+            currentRecord.firstWrongCount = firstWrongCount;
+            currentRecord.wordAnswerRecords = JSON.parse(JSON.stringify(wordAnswerRecords));
+            currentRecord.accuracy = Math.round((correctCount / totalWords) * 100);
+            currentRecord.usedTime = initialTime - timeLeft;
+            currentRecord.finishTime = new Date().toISOString();
+            currentRecord.status = 'completed';
+            
+            // 保存记录
+            const records = loadStudyRecords();
+            records.unshift(currentRecord);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+            
+            // 更新数据分析
+            updateAnalysisData(records);
+        }
+
+        // 数据分析（重点统计首次答错单词）
+        function updateAnalysisData(records) {
+            if (records.length === 0) {
+                noRecordsEl.classList.remove('hidden');
+                return;
+            }
+            noRecordsEl.classList.add('hidden');
+            
+            // 1. 概览数据
+            const totalStudies = records.length;
+            const totalWordsCount = totalStudies * totalWords;
+            const totalAccuracy = records.reduce((sum, record) => sum + record.accuracy, 0);
+            const avgAccuracy = Math.round(totalAccuracy / totalStudies);
+            const maxScore = Math.max(...records.map(record => record.score));
+            const validTimeRecords = records.filter(record => record.usedTime > 0);
+            const fastestTime = validTimeRecords.length > 0 
+                ? Math.min(...validTimeRecords.map(record => record.usedTime)) 
+                : 0;
+            
+            // 统计首次答错单词
+            const firstWrongWordsMap = {};
+            const allWrongWordsMap = {};
+            
+            records.forEach(record => {
+                // 统计首次答错单词
+                if (record.wordAnswerRecords && record.words) {
+                    record.wordAnswerRecords.forEach((answerRecord, index) => {
+                        if (!answerRecord.firstCorrect && answerRecord.answered) {
+                            const word = record.words[index];
+                            const wordKey = `${word.english}-${word.chinese}`;
+                            if (!firstWrongWordsMap[wordKey]) {
+                                firstWrongWordsMap[wordKey] = {
+                                    ...word,
+                                    count: 0,
+                                    totalAttempts: 0
+                                };
+                            }
+                            firstWrongWordsMap[wordKey].count++;
+                            firstWrongWordsMap[wordKey].totalAttempts += answerRecord.attemptCount;
+                        }
+                    });
+                }
+                
+                // 统计所有错误单词
+                if (record.accuracy < 80 && record.words) {
+                    record.words.forEach(word => {
+                        const wordKey = `${word.english}-${word.chinese}`;
+                        allWrongWordsMap[wordKey] = (allWrongWordsMap[wordKey] || 0) + 1;
+                    });
+                }
+            });
+            
+            const firstWrongWordsList = Object.values(firstWrongWordsMap);
+            const allWrongWordsList = Object.entries(allWrongWordsMap)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            // 更新概览UI
+            totalStudiesEl.textContent = totalStudies;
+            totalWordsCountEl.textContent = totalWordsCount;
+            avgAccuracyEl.textContent = `${avgAccuracy}%`;
+            maxAccuracyEl.textContent = `${Math.max(...records.map(record => record.accuracy))}%`;
+            weakWordsCountEl.textContent = allWrongWordsList.length;
+            firstWrongWordsCountEl.textContent = firstWrongWordsList.length;
+            
+            // 2. 各年级掌握情况
+            const gradeAccuracy = {
+                grade1: { count: 0, total: 0 },
+                grade2: { count: 0, total: 0 },
+                grade3: { count: 0, total: 0 },
+                grade4: { count: 0, total: 0 },
+                grade5: { count: 0, total: 0 },
+                grade6: { count: 0, total: 0 }
+            };
+            
+            records.forEach(record => {
+                if (gradeAccuracy[record.grade]) {
+                    gradeAccuracy[record.grade].count += record.accuracy;
+                    gradeAccuracy[record.grade].total += 1;
+                }
+            });
+            
+            // 更新各年级进度条
+            for (let i = 1; i <= 6; i++) {
+                const gradeKey = `grade${i}`;
+                const accuracyEl = document.getElementById(`${gradeKey}-accuracy`);
+                const progressEl = document.getElementById(`${gradeKey}-progress`);
+                
+                if (gradeAccuracy[gradeKey].total === 0) {
+                    accuracyEl.textContent = '0%';
+                    progressEl.style.width = '0%';
+                } else {
+                    const avg = Math.round(gradeAccuracy[gradeKey].count / gradeAccuracy[gradeKey].total);
+                    accuracyEl.textContent = `${avg}%`;
+                    progressEl.style.width = `${avg}%`;
+                }
+            }
+            
+            // 3. 首次答错单词展示
+            if (firstWrongWordsList.length === 0) {
+                noFirstWrongWordsEl.classList.remove('hidden');
+                firstWrongWordsEl.innerHTML = '';
+                firstWrongWordsEl.appendChild(noFirstWrongWordsEl);
+            } else {
+                noFirstWrongWordsEl.classList.add('hidden');
+                firstWrongWordsEl.innerHTML = '';
+                firstWrongWordsList.slice(0, 8).forEach(word => {
+                    const wordCard = document.createElement('div');
+                    wordCard.className = 'bg-danger/5 rounded-lg p-3 text-center border border-danger/20';
+                    wordCard.innerHTML = `
+                        <div class="font-bold text-danger">${word.english}</div>
+                        <div class="text-sm text-gray-600">${word.chinese}</div>
+                        <div class="text-xs text-gray-500 mt-1">答错${word.count}次</div>
+                    `;
+                    firstWrongWordsEl.appendChild(wordCard);
+                });
+            }
+            
+            // 4. 最近学习记录
+            recentRecordsEl.innerHTML = '';
+            const recentRecords = records.slice(0, 5);
+            
+            recentRecords.forEach((record) => {
+                const recordItem = document.createElement('div');
+                recordItem.className = 'bg-gray-50 rounded-lg p-3 shadow-sm border border-gray-100';
+                
+                // 格式化时间
+                const date = new Date(record.startTime);
+                const formattedDate = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                const formattedTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                
+                // 格式化用时
+                const usedMinutes = Math.floor(record.usedTime / 60);
+                const usedSeconds = record.usedTime % 60;
+                const usedTimeText = `${usedMinutes}分${usedSeconds < 10 ? '0' + usedSeconds : usedSeconds}秒`;
+                
+                // 单词来源标记
+                const sourceBadge = record.source === 'custom' 
+                    ? '<span class="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">本地单词</span>'
+                    : '';
+                
+                // 正确率颜色
+                let accuracyClass = 'text-green-600';
+                if (record.accuracy < 60) accuracyClass = 'text-red-600';
+                else if (record.accuracy < 80) accuracyClass = 'text-yellow-600';
+                
+                recordItem.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center">
+                            <span class="grade-badge mr-2 ${record.grade}">${record.grade.replace('grade', '')}</span>
+                            <span class="font-medium">${record.gradeText} ${record.difficultyText}难度${sourceBadge}</span>
+                        </div>
+                        <span class="text-sm text-gray-500">${formattedDate} ${formattedTime}</span>
+                    </div>
+                    <div class="flex flex-wrap justify-between text-sm gap-2">
+                        <div>得分: <span class="font-bold text-primary">${record.score}</span></div>
+                        <div>正确率: <span class="font-bold ${accuracyClass}">${record.accuracy}%</span></div>
+                        <div>首次答错: <span class="font-bold text-danger">${record.firstWrongCount}</span>个</div>
+                        <div>用时: <span class="font-medium">${usedTimeText}</span></div>
+                    </div>
+                `;
+                recentRecordsEl.appendChild(recordItem);
+            });
+            
+            // 5. 薄弱单词分析
+            weakWordsEl.innerHTML = '';
+            if (allWrongWordsList.length === 0) {
+                weakWordsEl.innerHTML = '<span class="text-gray-500 text-sm">暂无薄弱单词记录</span>';
+            } else {
+                allWrongWordsList.forEach(([wordKey, count]) => {
+                    const [english, chinese] = wordKey.split('-');
+                    const wordTag = document.createElement('span');
+                    wordTag.className = 'bg-red-50 text-red-600 text-xs px-2 py-1 rounded-full';
+                    wordTag.textContent = `${english}(${chinese}) ${count}次`;
+                    weakWordsEl.appendChild(wordTag);
+                });
+            }
+        }
+
+        // 18. 页面切换
+        function goToExcelUploadScreen() {
+            hideAllScreens();
+            excelUploadScreen.classList.remove('screen-hidden');
+        }
+        
+        function goToAnalysisScreen() {
+            hideAllScreens();
+            analysisScreen.classList.remove('screen-hidden');
+            loadStudyRecords(); // 刷新数据
+        }
+
+        function goToStartScreen() {
+            gameStarted = false;
+            clearInterval(timerInterval);
+            hideAllScreens();
+            startScreen.classList.remove('screen-hidden');
+            document.getElementById('time-progress').style.width = '100%';
+            document.getElementById('timer').classList.remove('text-danger');
+        }
+
+        function hideAllScreens() {
+            startScreen.classList.add('screen-hidden');
+            excelUploadScreen.classList.add('screen-hidden');
+            previewScreen.classList.add('screen-hidden');
+            gameScreen.classList.add('screen-hidden');
+            endScreen.classList.add('screen-hidden');
+            analysisScreen.classList.add('screen-hidden');
+            imageModal.classList.add('screen-hidden');
+            document.body.style.overflow = '';
+        }
+
+        // 19. 单词发音功能
+        function pronounceWord(word) {
+            // 使用Web Speech API实现发音
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            speechSynthesis.speak(utterance);
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+    

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小学英语单词记忆系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#ff8a5b',
+            secondary: '#23b7a4',
+            accent: '#4d8df7',
+            danger: '#ef5c6c'
+          },
+          fontFamily: {
+            game: ['"Avenir Next"', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="assets/css/enhanced-word-tool.css">
+</head>
+<body class="theme-playful bg-gradient-to-br from-sky-50 via-orange-50 to-emerald-50 min-h-screen font-game text-gray-800 overflow-x-hidden">
+  <header class="bg-primary text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center">
+        <i class="fa fa-gamepad text-2xl mr-3"></i>
+        <div>
+          <h1 class="text-[clamp(1.2rem,3vw,1.8rem)] font-bold">小学英语单词学习工具</h1>
+          <p class="text-xs md:text-sm tracking-widest opacity-80">SUNNY WORD CLUB · EXPLORER EDITION</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <span class="text-blue-700">★</span>
+        <span id="score">得分: 0</span>
+        <span class="text-blue-700">⏱</span>
+        <span id="timer">5:00</span>
+        <div id="word-source-indicator">
+          <i id="source-icon" class="fa fa-database"></i>
+          <span id="source-text">词库</span>
+          <strong id="current-source">默认单词库</strong>
+          <span id="word-source-status" class="hidden"></span>
+        </div>
+      </div>
+    </div>
+    <div class="w-full bg-white/20 h-2">
+      <div id="time-progress" class="bg-white h-full transition-all duration-1000" style="width: 100%"></div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8 relative min-h-screen">
+    <section id="start-screen" class="max-w-6xl mx-auto">
+      <div class="playful-screen-card p-5 md:p-6">
+        <div class="playful-home-layout">
+          <div class="playful-home-main">
+            <div class="playful-hero rounded-3xl">
+              <div class="playful-hero-cloud cloud-left"></div>
+              <div class="playful-hero-cloud cloud-right"></div>
+              <div class="playful-hero-sun">☀️</div>
+              <div class="playful-hero-book">📚</div>
+              <div class="playful-hero-mascot mascot-left">🐼</div>
+              <div class="playful-hero-mascot mascot-right">🦊</div>
+              <div class="playful-hero-topline">
+                <div>
+                  <div class="playful-home-kicker">今日学习</div>
+                  <h2 class="playful-home-title">先看图听音，<br>再自己想起来</h2>
+                </div>
+                <div class="playful-tag-row">
+                  <span class="playful-tag">看图</span>
+                  <span class="playful-tag">听音</span>
+                  <span class="playful-tag">回忆</span>
+                </div>
+              </div>
+              <div class="playful-hero-copy">
+                <div class="playful-hero-title">一节课完成三件事</div>
+                <div class="playful-hero-subtitle">学新词，做小测，看复习建议。</div>
+              </div>
+            </div>
+
+            <div class="playful-mini-missions">
+              <button id="reading-btn" class="playful-mission-card">
+                <span class="playful-mission-icon">⭐</span>
+                <span>
+                  <span class="playful-mission-title block">摸星星</span>
+                  <span class="playful-mission-text block">每答对一个单词都能获得奖励</span>
+                </span>
+              </button>
+              <button type="button" class="playful-mission-card">
+                <span class="playful-mission-icon">🎈</span>
+                <span>
+                  <span class="playful-mission-title block">拼拼乐</span>
+                  <span class="playful-mission-text block">拖一拖字母，轻松组成单词</span>
+                </span>
+              </button>
+            </div>
+
+            <div class="playful-home-note">
+              <span class="playful-home-note-dot"></span>
+              <span>建议先卡片学习，再开始游戏。</span>
+            </div>
+          </div>
+
+          <aside class="playful-home-panel">
+            <div class="playful-panel-header">
+              <div>
+                <div class="playful-panel-eyebrow">今日出发</div>
+                <h3 class="playful-panel-title">选择学习内容</h3>
+              </div>
+              <span class="playful-panel-badge">6年级</span>
+            </div>
+
+            <label class="block font-bold mt-2" for="grade-select">选择年级:</label>
+            <select id="grade-select" class="w-full p-3">
+              <option value="grade1">一年级</option>
+              <option value="grade2">二年级</option>
+              <option value="grade3">三年级</option>
+              <option value="grade4">四年级</option>
+              <option value="grade5" selected>五年级</option>
+              <option value="grade6">六年级</option>
+            </select>
+
+            <label class="block font-bold mt-2" for="difficulty">选择难度:</label>
+            <select id="difficulty" class="w-full p-3">
+              <option value="easy">Easy · 基础（认识单词）</option>
+              <option value="medium" selected>Medium · 进阶（会写单词）</option>
+              <option value="hard">Hard · 挑战（熟练运用）</option>
+            </select>
+
+            <div class="playful-settings-shell p-4 mt-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold">学习设置</h3>
+                <button id="toggle-settings-btn" class="text-primary text-sm"><i class="fa fa-cog mr-1"></i>展开</button>
+              </div>
+              <div id="settings-panel" class="hidden space-y-4 mt-4">
+                <div>
+                  <label class="block text-sm font-bold mb-1" for="word-count-slider">单词数量: <span id="word-count-display">10</span></label>
+                  <input id="word-count-slider" type="range" min="5" max="50" value="10" class="w-full">
+                </div>
+                <div>
+                  <label class="block text-sm font-bold mb-1" for="time-slider">学习时间: <span id="time-display">5分钟</span></label>
+                  <input id="time-slider" type="range" min="3" max="30" value="5" class="w-full">
+                </div>
+                <button id="reset-settings-btn" class="text-sm text-gray-500"><i class="fa fa-refresh mr-1"></i>恢复默认</button>
+              </div>
+            </div>
+
+            <div class="playful-action-grid compact-action-grid">
+              <button id="learn-first-btn" class="bg-primary text-white py-3 px-4"><i class="fa fa-book mr-1"></i>卡片学习</button>
+              <button id="direct-game-btn" class="bg-secondary text-white py-3 px-4"><i class="fa fa-gamepad mr-1"></i>开始游戏</button>
+              <button id="analysis-btn" class="quiet-action-btn"><i class="fa fa-bar-chart mr-1"></i>数据</button>
+              <button id="excel-upload-btn" class="quiet-action-btn"><i class="fa fa-file-excel-o mr-1"></i>导入</button>
+            </div>
+          </aside>
+        </div>
+        <div id="current-selection-display" class="mt-4 text-sm text-gray-500"></div>
+      </div>
+    </section>
+
+    <section id="excel-upload-screen" class="screen-hidden max-w-4xl mx-auto">
+      <div class="page-header">
+        <h1>导入单词表</h1>
+        <button id="back-to-start-from-excel-btn" class="home-btn">主页</button>
+      </div>
+      <div class="upload-panel">
+        <div class="source-status-card">
+          <div class="font-bold text-gray-800">当前词库状态</div>
+          <p class="text-sm text-gray-500 mt-1">系统会优先读取 Excel 的第一个 sheet，并按当前选择的年级、难度匹配学习单词。</p>
+        </div>
+        <label for="excel-upload" class="upload-dropzone">
+          <span class="upload-icon"><i class="fa fa-cloud-upload"></i></span>
+          <span class="upload-title">选择 Excel 单词表</span>
+          <span class="upload-subtitle">读取第一个 sheet，支持 .xlsx / .xls</span>
+          <input id="excel-upload" type="file" accept=".xlsx,.xls">
+        </label>
+        <div id="excel-upload-status" class="upload-status"></div>
+        <div class="flex flex-wrap gap-3 mt-5">
+          <button id="use-uploaded-words" class="primary-btn">使用已导入词库</button>
+          <button id="use-default-words" class="secondary-btn">使用默认词库</button>
+          <button id="download-template-btn" class="secondary-btn">下载模板</button>
+        </div>
+        <div class="import-help-grid mt-6">
+          <div>
+            <h3>必填字段</h3>
+            <p>英文、中文、Unit、词性、听一听、拆开记、例句、小窍门、拼写小秘密。</p>
+          </div>
+          <div>
+            <h3>图片字段</h3>
+            <p>图片链接可暂时为空；图片文件名建议使用 snake_case.png，后续导入 URL 即可。</p>
+          </div>
+          <div>
+            <h3>导入校验</h3>
+            <p>系统会拦截错误展示模式、拼写模式，以及明显不自然的例句模板。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="preview-screen" class="screen-hidden max-w-7xl mx-auto">
+      <div class="preview-header">
+        <div class="flex items-center gap-4">
+          <span id="preview-grade-badge" class="grade-badge">6</span>
+          <div>
+            <h1>卡片式单词学习 <span id="preview-word-count" class="word-count-pill">1/10</span></h1>
+            <p id="preview-step-hint">先看图听音，再看记忆小帮手，最后自己回忆。</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button id="back-to-start-from-preview-btn" class="home-btn"><i class="fa fa-home"></i> 主页</button>
+        </div>
+      </div>
+
+      <article id="single-word-card" class="single-word-card">
+        <section id="preview-study-step" class="preview-step active">
+          <div class="preview-image-stage">
+            <button id="card-edit-image-btn" class="image-tool-btn" title="编辑图片"><i class="fa fa-pencil"></i></button>
+            <button id="card-pronounce-btn" class="image-audio-btn" title="听单词"><i class="fa fa-volume-up"></i></button>
+            <img id="preview-word-image" alt="单词图片">
+            <div id="preview-missing-image" class="missing-image-state">缺少图片</div>
+            <div id="preview-image-filename" class="image-filename"></div>
+          </div>
+          <div class="preview-word-strip">
+            <div id="preview-english-word" class="preview-word">word</div>
+            <div id="preview-phonetic" class="preview-phonetic"></div>
+            <div id="preview-chinese-word" class="preview-cn">中文</div>
+          </div>
+        </section>
+
+        <section id="preview-helper-step" class="preview-step">
+          <h2>记忆小帮手</h2>
+          <div class="helper-card">
+            <div class="helper-card-head">
+              <span>听一听</span>
+              <button id="preview-word-audio-btn" class="audio-mini-btn">🔊 听单词</button>
+            </div>
+            <p id="preview-read-tip"></p>
+          </div>
+          <div class="helper-card">
+            <div class="helper-card-head">
+              <span>跟着说</span>
+              <button id="preview-sentence-audio-btn" class="audio-mini-btn">🔊 听句子</button>
+            </div>
+            <p id="preview-example" class="example-en"></p>
+            <p id="preview-example-cn" class="example-cn"></p>
+          </div>
+          <div id="preview-chunk-card" class="helper-card">
+            <div class="helper-card-head"><span>拆开记</span></div>
+            <p id="preview-syllable-split"></p>
+          </div>
+          <div class="helper-card">
+            <div class="helper-card-head"><span>记忆小窍门</span></div>
+            <p id="preview-memory-tip"></p>
+          </div>
+          <div class="helper-card">
+            <div class="helper-card-head"><span>拼写小秘密</span></div>
+            <p id="preview-spelling-tip"></p>
+          </div>
+        </section>
+
+        <section id="preview-quiz-step" class="preview-step">
+          <h2 id="preview-quiz-title">主动回忆</h2>
+          <p id="preview-quiz-prompt" class="quiz-prompt"></p>
+          <p id="preview-quiz-helper" class="quiz-helper"></p>
+          <div id="preview-quiz-options" class="active-recall-options"></div>
+          <div id="preview-quiz-spelling" class="preview-quiz-spelling">
+            <div id="preview-quiz-spelling-pattern" class="spelling-pattern"></div>
+            <div id="preview-quiz-answer-slots" class="answer-slots"></div>
+            <div id="preview-quiz-letter-bank" class="letter-bank"></div>
+            <input id="preview-quiz-text-input" type="text" autocomplete="off" placeholder="试着拼出来">
+          </div>
+          <button id="preview-quiz-submit-btn" class="primary-btn">提交答案</button>
+          <div id="preview-quiz-feedback" class="quiz-feedback"></div>
+        </section>
+
+        <div class="preview-actions">
+          <button id="prev-word-btn" class="secondary-btn">上一张</button>
+          <button id="preview-main-action-btn" class="primary-btn">查看记忆小帮手</button>
+          <button id="next-word-btn" class="secondary-btn">下一张</button>
+        </div>
+      </article>
+    </section>
+
+    <section id="game-screen" class="screen-hidden max-w-6xl mx-auto">
+      <div class="game-header">
+        <span id="game-grade-badge" class="grade-badge">6</span>
+        <div class="score-box">得分 <strong>0</strong></div>
+        <div class="timer-box">时间 <strong>60</strong></div>
+        <button id="study-now-btn" class="secondary-btn">卡片复习</button>
+        <button id="analysis-from-game-btn" class="secondary-btn">记录</button>
+        <button id="back-to-start-from-game-btn" class="home-btn">主页</button>
+      </div>
+      <div class="progress-shell">
+        <div class="time-progress-inline"></div>
+        <div id="completion-progress"></div>
+      </div>
+      <div id="progress-text" class="progress-text"></div>
+      <div id="today-review-summary" class="today-review-summary"></div>
+      <button id="start-review-btn" class="secondary-btn">开始复习</button>
+
+      <div class="game-card">
+        <h2 id="question-title">看图选英文</h2>
+        <p id="question-helper"></p>
+        <div id="chinese-word" class="question-cn"></div>
+        <button id="game-pronounce-btn" class="audio-main-btn">🔊 听单词</button>
+        <div id="active-recall-options" class="active-recall-options"></div>
+        <div id="letter-game-instruction" class="letter-game-instruction"></div>
+        <div id="answer-slots" class="answer-slots"></div>
+        <div id="letter-bank" class="letter-bank"></div>
+        <div class="flex flex-wrap gap-2 justify-center">
+          <button id="remove-letter-btn" class="secondary-btn">退一格</button>
+          <button id="clear-answer-btn" class="secondary-btn">清空</button>
+          <button id="shuffle-letters-btn" class="secondary-btn">换顺序</button>
+        </div>
+        <button id="submit-btn" class="primary-btn">提交答案</button>
+        <button id="hint-btn" class="secondary-btn">小提示</button>
+        <div id="hint" class="hint-box"></div>
+        <div id="feedback" class="feedback-box"></div>
+        <div id="answer-record" class="answer-record"><span id="record-text"></span></div>
+        <div id="word-count" class="word-count-pill"></div>
+      </div>
+      <div id="mascot-message" class="mascot-message"></div>
+      <div id="celebration-layer" class="celebration-layer"></div>
+      <div id="reward-stars" class="reward-stars"></div>
+      <div id="words-list" class="words-list"></div>
+    </section>
+
+    <section id="end-screen" class="screen-hidden max-w-5xl mx-auto text-center">
+      <span id="end-grade-badge" class="grade-badge">6</span>
+      <div id="result-icon" class="result-icon">🎉</div>
+      <h1 id="result-title">完成啦</h1>
+      <p id="result-message"></p>
+      <div class="result-grid">
+        <div>最终得分 <strong id="final-score">0</strong></div>
+        <div>正确率 <strong id="accuracy">0%</strong></div>
+        <div>答对 <strong id="correct-count">0</strong></div>
+        <div>首次答错 <strong id="first-wrong-count">0</strong></div>
+        <div>用时 <strong id="used-time">0秒</strong></div>
+      </div>
+      <div id="result-review-panel" class="result-review-panel">
+        <h2>复习安排</h2>
+        <div id="result-review-summary"></div>
+        <div id="result-review-words"></div>
+        <button id="review-wrong-btn" class="primary-btn">再练错词</button>
+      </div>
+      <div class="flex flex-wrap gap-3 justify-center mt-6">
+        <button class="primary-btn" id="study-more-btn">继续学习</button>
+        <button id="restart-game-btn" class="secondary-btn">再玩一次</button>
+        <button id="new-game-btn" class="secondary-btn">新一轮</button>
+        <button id="back-to-study-btn" class="secondary-btn">回到单词卡</button>
+        <button id="go-to-analysis-btn" class="secondary-btn">看学习记录</button>
+        <button id="back-to-start-from-end-btn" class="home-btn">主页</button>
+      </div>
+    </section>
+
+    <section id="analysis-screen" class="screen-hidden max-w-6xl mx-auto">
+      <div class="page-header">
+        <h1>学习记录</h1>
+        <button id="back-to-start-from-analysis-btn" class="home-btn">主页</button>
+      </div>
+      <div class="analysis-grid">
+        <div>学习次数 <strong id="total-studies">0</strong></div>
+        <div>单词数量 <strong id="total-words-count">0</strong></div>
+        <div>平均正确率 <strong id="avg-accuracy">0%</strong></div>
+        <div>最高正确率 <strong id="max-accuracy">0%</strong></div>
+        <div>错词数量 <strong id="weak-words-count">0</strong></div>
+        <div>首次错词 <strong id="first-wrong-words-count">0</strong></div>
+      </div>
+      <section id="parent-daily-report" class="report-panel"></section>
+      <section class="records-panel">
+        <h2>各年级掌握情况</h2>
+        <div id="grade-mastery" class="grade-mastery-list">
+          <div class="grade-mastery-item">
+            <div class="grade-mastery-head"><span>一年级</span><strong id="grade1-accuracy">0%</strong></div>
+            <div class="progress-bar"><div class="progress-fill bg-grade1" id="grade1-progress" style="width: 0%"></div></div>
+          </div>
+          <div class="grade-mastery-item">
+            <div class="grade-mastery-head"><span>二年级</span><strong id="grade2-accuracy">0%</strong></div>
+            <div class="progress-bar"><div class="progress-fill bg-grade2" id="grade2-progress" style="width: 0%"></div></div>
+          </div>
+          <div class="grade-mastery-item">
+            <div class="grade-mastery-head"><span>三年级</span><strong id="grade3-accuracy">0%</strong></div>
+            <div class="progress-bar"><div class="progress-fill bg-grade3" id="grade3-progress" style="width: 0%"></div></div>
+          </div>
+          <div class="grade-mastery-item">
+            <div class="grade-mastery-head"><span>四年级</span><strong id="grade4-accuracy">0%</strong></div>
+            <div class="progress-bar"><div class="progress-fill bg-grade4" id="grade4-progress" style="width: 0%"></div></div>
+          </div>
+          <div class="grade-mastery-item">
+            <div class="grade-mastery-head"><span>五年级</span><strong id="grade5-accuracy">0%</strong></div>
+            <div class="progress-bar"><div class="progress-fill bg-grade5" id="grade5-progress" style="width: 0%"></div></div>
+          </div>
+          <div class="grade-mastery-item">
+            <div class="grade-mastery-head"><span>六年级</span><strong id="grade6-accuracy">0%</strong></div>
+            <div class="progress-bar"><div class="progress-fill bg-grade6" id="grade6-progress" style="width: 0%"></div></div>
+          </div>
+        </div>
+      </section>
+      <section class="records-panel">
+        <h2>最近记录</h2>
+        <div id="recent-records"></div>
+        <div id="no-records">还没有学习记录。</div>
+      </section>
+      <section class="records-panel">
+        <h2>错词分析</h2>
+        <div id="weak-words"></div>
+        <div id="first-wrong-words"></div>
+        <div id="no-first-wrong-words">暂时没有首次错词。</div>
+      </section>
+    </section>
+
+    <section id="reading-screen" class="screen-hidden max-w-6xl mx-auto">
+      <div class="page-header">
+        <h1>阅读练习</h1>
+        <button id="back-to-start-from-reading-btn" class="home-btn">主页</button>
+      </div>
+      <div class="reading-actions">
+        <button id="refresh-reading-btn" class="secondary-btn">换一篇</button>
+        <button id="reading-start-game-btn" class="primary-btn">做小测试</button>
+      </div>
+      <div id="reading-empty" class="empty-state">还没有可用阅读内容。</div>
+      <div id="reading-content" class="reading-content">
+        <div id="reading-target-words"></div>
+        <article id="reading-story"></article>
+        <div id="reading-questions-list"></div>
+        <div id="reading-cloze-list"></div>
+        <div id="reading-sentence-builder"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="image-modal" class="modal screen-hidden">
+    <div class="modal-content">
+      <button id="close-modal-btn" class="modal-close">×</button>
+      <h2>设置单词图片</h2>
+      <p><span id="modal-word-index"></span> <strong id="modal-word-name"></strong></p>
+      <input id="custom-image-upload" type="file" accept="image/*">
+      <input id="image-url-input" type="url" placeholder="粘贴图片链接">
+      <div class="flex gap-3 justify-end mt-4">
+        <button id="cancel-image-btn" class="secondary-btn">取消</button>
+        <button id="save-image-btn" class="primary-btn">保存图片</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/enhanced-word-tool.js"></script>
+</body>
+</html>

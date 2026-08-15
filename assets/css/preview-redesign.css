@@ -1,0 +1,584 @@
+/* Card-learning three-stage layout. Loaded after the legacy stylesheet. */
+html body.mode-preview {
+  height: var(--app-viewport-height, 100dvh) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+html body.mode-preview main.container {
+  box-sizing: border-box !important;
+  width: min(980px, calc(100vw - 20px)) !important;
+  max-width: 980px !important;
+  height: var(--app-viewport-height, 100dvh) !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  padding: clamp(6px, 1.2vh, 12px) 0 !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+html body.mode-preview #preview-screen {
+  width: 100% !important;
+  max-width: 900px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+  align-self: stretch !important;
+}
+
+html body.mode-preview #preview-screen .preview-header {
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: clamp(8px, 1.3vh, 13px) clamp(14px, 2.2vw, 22px) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border-radius: 22px 22px 0 0 !important;
+}
+
+html body.mode-preview #preview-screen .preview-header h1 {
+  margin: 0 !important;
+  font-size: clamp(1.25rem, min(3vw, 3.4vh), 1.9rem) !important;
+  line-height: 1.1 !important;
+}
+
+html body.mode-preview #preview-screen .preview-header p {
+  display: none !important;
+}
+
+html body.mode-preview #preview-screen .grade-badge {
+  flex: 0 0 auto !important;
+  width: clamp(36px, 5.3vh, 48px) !important;
+  height: clamp(36px, 5.3vh, 48px) !important;
+}
+
+html body.mode-preview #preview-screen .home-btn {
+  flex: 0 0 auto !important;
+  min-height: 38px !important;
+  padding: 7px 14px !important;
+}
+
+.preview-stage-track {
+  min-height: 42px;
+  padding: 6px clamp(16px, 4vw, 40px);
+  display: grid;
+  grid-template-columns: auto minmax(18px, 1fr) auto minmax(18px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  background: #fffaf3;
+  border: solid rgba(23, 50, 77, 0.08);
+  border-width: 0 1px 1px;
+}
+
+.preview-stage-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #8a96a6;
+  font-size: clamp(0.72rem, 1.7vh, 0.88rem);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.preview-stage-item span {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e8edf3;
+  color: #718096;
+}
+
+.preview-stage-item.active {
+  color: #f05f3c;
+}
+
+.preview-stage-item.active span {
+  background: #f05f3c;
+  color: #fff;
+  box-shadow: 0 5px 12px -7px rgba(240, 95, 60, 0.8);
+}
+
+.preview-stage-item.complete {
+  color: #159f91;
+}
+
+.preview-stage-item.complete span {
+  background: #18b7aa;
+  color: #fff;
+}
+
+.preview-stage-line {
+  height: 3px;
+  border-radius: 999px;
+  background: #e8edf3;
+}
+
+html body.mode-preview #preview-screen #single-word-card {
+  height: 100% !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) auto !important;
+  overflow: hidden !important;
+  border-radius: 0 0 22px 22px !important;
+  background: #f8fafc !important;
+}
+
+html body.mode-preview #preview-screen .preview-step.hidden {
+  display: none !important;
+}
+
+html body.mode-preview #preview-screen #preview-study-step.hidden,
+html body.mode-preview #preview-screen #preview-helper-step.hidden,
+html body.mode-preview #preview-screen #preview-quiz-step.hidden {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+html body.mode-preview #preview-screen .preview-step:not(.hidden) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  padding: clamp(10px, 1.5vh, 16px) !important;
+}
+
+html body.mode-preview #preview-screen #preview-study-step:not(.hidden) {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+
+html body.mode-preview #preview-screen .preview-image-stage {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  padding: clamp(8px, 1.2vh, 12px) !important;
+  overflow: hidden !important;
+  border-radius: 18px !important;
+  background: #f7fafc !important;
+}
+
+html body.mode-preview #preview-screen #preview-word-image,
+html body.mode-preview #preview-screen .missing-image-state {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: auto !important;
+  object-fit: contain !important;
+  border-radius: 12px !important;
+}
+
+html body.mode-preview #preview-screen .image-tool-btn,
+html body.mode-preview #preview-screen .image-audio-btn {
+  top: 12px !important;
+  width: clamp(38px, 5.5vh, 48px) !important;
+  height: clamp(38px, 5.5vh, 48px) !important;
+}
+
+html body.mode-preview #preview-screen .image-tool-btn {
+  left: 12px !important;
+}
+
+html body.mode-preview #preview-screen .image-audio-btn {
+  right: 12px !important;
+}
+
+html body.mode-preview #preview-screen .preview-word-strip {
+  position: static !important;
+  transform: none !important;
+  width: min(620px, calc(100% - 20px)) !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  padding: clamp(6px, 1vh, 9px) 16px !important;
+  border-radius: 14px !important;
+}
+
+html body.mode-preview #preview-screen .preview-word {
+  font-size: clamp(1.65rem, min(6vw, 4.4vh), 2.8rem) !important;
+  line-height: 1 !important;
+}
+
+html body.mode-preview #preview-screen .preview-phonetic {
+  margin-top: 3px !important;
+  font-size: clamp(0.8rem, 1.8vh, 1rem) !important;
+}
+
+html body.mode-preview #preview-screen .preview-cn {
+  margin-top: 3px !important;
+  font-size: clamp(0.95rem, min(3vw, 2.4vh), 1.3rem) !important;
+  line-height: 1.1 !important;
+}
+
+html body.mode-preview #preview-screen #preview-helper-step:not(.hidden) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-auto-rows: minmax(108px, auto) !important;
+  align-content: center !important;
+  gap: clamp(12px, 2vh, 18px) !important;
+  padding: clamp(16px, 3vh, 28px) clamp(16px, 3vw, 30px) !important;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 237, 213, 0.72), transparent 28%),
+    radial-gradient(circle at 82% 24%, rgba(204, 251, 241, 0.65), transparent 30%),
+    #f7fafc !important;
+}
+
+html body.mode-preview #preview-screen #preview-helper-step > h2 {
+  grid-column: 1 / -1;
+  margin: 0 0 clamp(2px, 0.8vh, 6px) !important;
+  font-size: clamp(1.35rem, 3.4vh, 2rem) !important;
+  line-height: 1.1 !important;
+}
+
+html body.mode-preview #preview-screen #preview-helper-step .helper-card {
+  min-width: 0 !important;
+  min-height: clamp(104px, 15vh, 140px) !important;
+  margin: 0 !important;
+  padding: clamp(16px, 2.4vh, 24px) clamp(18px, 2.6vw, 26px) !important;
+  border: 1px solid rgba(23, 50, 77, 0.07) !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  box-shadow: 0 18px 34px -32px rgba(23, 50, 77, 0.58) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+html body.mode-preview #preview-screen .helper-card-head {
+  margin-bottom: clamp(8px, 1.4vh, 12px) !important;
+  font-size: clamp(0.98rem, 2vh, 1.12rem) !important;
+}
+
+html body.mode-preview #preview-screen .helper-card p {
+  font-size: clamp(0.98rem, 2.1vh, 1.18rem) !important;
+  line-height: 1.55 !important;
+  overflow-wrap: anywhere;
+}
+
+html body.mode-preview #preview-screen #preview-memory-tip {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+html body.mode-preview #preview-screen #preview-helper-step .helper-card:nth-of-type(2) {
+  background: linear-gradient(135deg, #ffffff, #fff7ed) !important;
+}
+
+html body.mode-preview #preview-screen #preview-helper-step .helper-card:nth-of-type(4),
+html body.mode-preview #preview-screen #preview-helper-step .helper-card:nth-of-type(5) {
+  background: linear-gradient(135deg, #ffffff, #f0fdfa) !important;
+}
+
+html body.mode-preview #preview-screen .audio-mini-btn {
+  min-height: 34px !important;
+  padding: 6px 10px !important;
+  font-size: 0.82rem !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step:not(.hidden) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  padding: clamp(12px, 2vh, 20px) !important;
+  text-align: center !important;
+  background: #f7fafc !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step h2 {
+  margin: 0 !important;
+  font-size: clamp(1.3rem, 3vh, 1.85rem) !important;
+  line-height: 1.15 !important;
+}
+
+html body.mode-preview #preview-screen .quiz-prompt {
+  margin: 0 !important;
+  font-size: clamp(1.15rem, min(4vw, 3.2vh), 1.8rem) !important;
+  line-height: 1.25 !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="image_to_english"] {
+  gap: clamp(6px, 1.1vh, 10px) !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="image_to_english"] .quiz-prompt {
+  flex: 0 1 clamp(150px, 29vh, 240px) !important;
+  min-height: 120px !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step .preview-quiz-image {
+  display: block !important;
+  width: auto !important;
+  height: 100% !important;
+  max-width: min(620px, 100%) !important;
+  max-height: clamp(150px, 29vh, 240px) !important;
+  margin: 0 auto !important;
+  aspect-ratio: auto !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  border-radius: 16px !important;
+}
+
+html body.mode-preview #preview-screen .quiz-helper {
+  margin: 0 !important;
+  font-size: 0.9rem !important;
+}
+
+html body.mode-preview #preview-screen .active-recall-options {
+  width: min(700px, 100%) !important;
+  margin: 4px auto !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="image_to_english"] .active-recall-options {
+  flex: 0 0 auto !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+html body.mode-preview #preview-screen .active-recall-option {
+  min-height: clamp(52px, 7vh, 60px) !important;
+  padding: 10px 12px !important;
+  border-radius: 14px !important;
+  font-size: clamp(0.92rem, 2vh, 1.05rem) !important;
+}
+
+html body.mode-preview #preview-screen .preview-quiz-spelling {
+  width: min(720px, 100%) !important;
+  margin: 0 auto !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-submit-btn {
+  align-self: center !important;
+  min-width: 180px !important;
+  min-height: 42px !important;
+  margin-top: 4px !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step:not(.hidden) {
+  justify-content: center !important;
+  gap: clamp(10px, 2vh, 18px) !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="audio_to_english"],
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="english_to_chinese"],
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="chinese_to_english"] {
+  padding-top: clamp(18px, 4vh, 42px) !important;
+  padding-bottom: clamp(18px, 4vh, 42px) !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="audio_to_english"] h2,
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="english_to_chinese"] h2,
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="chinese_to_english"] h2 {
+  margin-bottom: 0 !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="audio_to_english"] .quiz-prompt,
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="english_to_chinese"] .quiz-prompt,
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="chinese_to_english"] .quiz-prompt {
+  width: min(760px, 100%) !important;
+  margin: 0 auto !important;
+  padding: clamp(14px, 2.4vh, 24px) clamp(16px, 3vw, 30px) !important;
+  border: 1px solid rgba(23, 50, 77, 0.08) !important;
+  border-radius: 22px !important;
+  background: linear-gradient(135deg, #fff 0%, #fffaf4 100%) !important;
+  box-shadow: 0 18px 38px -34px rgba(23, 50, 77, 0.48) !important;
+}
+
+html body.mode-preview #preview-screen .audio-quiz-card {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 16px !important;
+  text-align: left !important;
+}
+
+html body.mode-preview #preview-screen .audio-quiz-icon {
+  width: clamp(48px, 7vh, 64px) !important;
+  height: clamp(48px, 7vh, 64px) !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 20px !important;
+  background: #eff6ff !important;
+  font-size: clamp(1.5rem, 3.4vh, 2rem) !important;
+}
+
+html body.mode-preview #preview-screen .audio-quiz-copy strong,
+html body.mode-preview #preview-screen .audio-quiz-copy span {
+  display: block !important;
+}
+
+html body.mode-preview #preview-screen .audio-quiz-copy strong {
+  color: #17324d !important;
+  font-size: clamp(1.05rem, 2.5vh, 1.35rem) !important;
+  line-height: 1.25 !important;
+}
+
+html body.mode-preview #preview-screen .audio-quiz-copy span {
+  margin-top: 4px !important;
+  color: #6b7b91 !important;
+  font-size: clamp(0.78rem, 1.8vh, 0.95rem) !important;
+}
+
+html body.mode-preview #preview-screen .quiz-replay-audio-btn {
+  min-height: 42px !important;
+  padding: 8px 16px !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 999px !important;
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="audio_to_english"] .active-recall-options,
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="english_to_chinese"] .active-recall-options,
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="chinese_to_english"] .active-recall-options {
+  width: min(760px, 100%) !important;
+  gap: clamp(10px, 1.8vh, 14px) !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="audio_to_english"] .active-recall-option,
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="english_to_chinese"] .active-recall-option,
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="chinese_to_english"] .active-recall-option {
+  min-height: clamp(54px, 8vh, 68px) !important;
+  font-size: clamp(1rem, 2.2vh, 1.18rem) !important;
+}
+
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="spelling"],
+html body.mode-preview #preview-screen #preview-quiz-step[data-question-type="phrase_order"] {
+  justify-content: center !important;
+}
+
+html body.mode-preview #preview-screen .preview-complete-card {
+  width: min(620px, 100%) !important;
+  margin: 0 auto !important;
+  padding: clamp(18px, 3vh, 28px) !important;
+  border: 1px solid rgba(24, 183, 170, 0.18) !important;
+  border-radius: 24px !important;
+  background: linear-gradient(135deg, #ffffff, #f0fdfa) !important;
+  box-shadow: 0 18px 38px -34px rgba(23, 50, 77, 0.48) !important;
+}
+
+html body.mode-preview #preview-screen .preview-complete-card strong {
+  display: block !important;
+  color: #17324d !important;
+  font-size: clamp(1.35rem, 3vh, 1.9rem) !important;
+  line-height: 1.2 !important;
+}
+
+html body.mode-preview #preview-screen .preview-complete-card span {
+  display: block !important;
+  margin-top: 8px !important;
+  color: #55657a !important;
+  font-size: clamp(0.9rem, 2vh, 1.05rem) !important;
+  line-height: 1.45 !important;
+}
+
+html body.mode-preview #preview-screen .preview-actions {
+  position: relative !important;
+  z-index: 20 !important;
+  min-height: 0 !important;
+  padding: clamp(7px, 1.2vh, 11px) clamp(10px, 2vw, 18px) !important;
+  display: grid !important;
+  grid-template-columns: minmax(64px, 0.8fr) minmax(140px, 1.4fr) minmax(64px, 0.8fr) !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: #fff !important;
+  border-top: 1px solid rgba(23, 50, 77, 0.08);
+  box-shadow: 0 -10px 24px -22px rgba(23, 50, 77, 0.6);
+}
+
+html body.mode-preview #preview-screen .preview-actions button {
+  width: 100% !important;
+  min-height: clamp(38px, 5.4vh, 44px) !important;
+  padding: 7px 10px !important;
+  font-size: clamp(0.78rem, 1.8vh, 0.95rem) !important;
+}
+
+@media (max-width: 680px) {
+  html body.mode-preview main.container {
+    width: calc(100vw - 10px) !important;
+    padding: 5px 0 !important;
+  }
+
+  .preview-stage-track {
+    padding-left: 10px;
+    padding-right: 10px;
+    gap: 4px;
+  }
+
+  .preview-stage-item {
+    gap: 3px;
+    font-size: 0.68rem;
+  }
+
+  .preview-stage-item span {
+    width: 21px;
+    height: 21px;
+  }
+
+  html body.mode-preview #preview-screen #preview-helper-step:not(.hidden) {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body.mode-preview #preview-screen .active-recall-options {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body.mode-preview #preview-screen .audio-quiz-card {
+    grid-template-columns: 1fr !important;
+    text-align: center !important;
+    justify-items: center !important;
+  }
+}
+
+@media (max-height: 580px) {
+  .preview-stage-track {
+    min-height: 34px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  html body.mode-preview #preview-screen .preview-header {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
+  html body.mode-preview #preview-screen .preview-actions {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+  }
+
+  html body.mode-preview #preview-screen #preview-quiz-step .preview-quiz-image {
+    max-height: clamp(120px, 25vh, 170px) !important;
+  }
+}
