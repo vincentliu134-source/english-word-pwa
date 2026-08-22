@@ -1,6 +1,6 @@
-# 小学英语单词学习工具
+# 词星探险
 
-一个纯前端的小学英语单词学习工具，支持卡片学习、多题型主动回忆、Excel 单词库导入、错词复习、阅读练习和本地学习记录分析。
+一个纯前端的小学英语看图、听读与主动回忆工具，支持自适应卡片学习、多题型主动回忆、Excel 单词库导入、薄弱点小回合、间隔复习、今日单词小故事和本地学习记录分析。
 
 ## 打开方式
 
@@ -20,7 +20,9 @@
 │           ├── word-database.js
 │           ├── import-core.js
 │           ├── game-core.js
-│           └── statistics-core.js
+│           ├── statistics-core.js
+│           ├── memory-core.js
+│           └── story-core.js
 ├── archive
 │   └── legacy-pages
 │       └── 历史 HTML 版本
@@ -33,8 +35,10 @@
 
 - 年级与难度选择
 - 单词数量与学习时长配置
-- 卡片式学习
+- 「我记住了 / 帮我记一记」自适应卡片学习
 - 多题型主动回忆与拼写挑战
+- 错词自动生成「只复习薄弱点」小回合
+- 基于已学词的本地「今日单词小故事」、逐句点读和三道理解题
 - Excel 单词库导入
 - 自定义图片
 - 学习数据分析
@@ -50,7 +54,7 @@
 
 ## Excel 格式
 
-正式模板共有 34 个字段。请使用
+正式模板共有 36 个字段。请使用
 `outputs/word-tool-upgrade/小学英语单词导入模板.xlsx`，完整规则见
 `docs/Excel导入规范.md`。
 
@@ -70,6 +74,26 @@
 ```bash
 npm test
 npm run check
+```
+
+## 批量生成本地音频
+
+音频脚本会读取默认词库，使用 macOS 本地 `say` 朗读单词和例句，转成 MP3 后写入
+`assets/audio/`，并自动回写 `audioUrl / audio_url` 与
+`sentenceAudioUrl / sentence_audio_url`。
+
+首次使用前需要安装 ffmpeg：
+
+```bash
+brew install ffmpeg
+```
+
+常用命令：
+
+```bash
+npm run generate-audio -- --dry-run --limit=5
+npm run generate-audio -- --grade=grade6 --difficulty=easy --limit=10
+npm run generate-audio -- --word=taste --force
 ```
 
 ## 文档

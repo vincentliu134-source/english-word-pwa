@@ -4,17 +4,21 @@
 
 ## 标准表头
 
-模板共 34 列：
+模板共 36 列：
 
-`教材版本, 年级, 册别, Unit, Lesson, 页码, 序号, 英文, 中文, 词性, 主题分类, 课标要求, 难度, 是否短语/专名, 图片生成文件名, 图片链接, 发音链接, 标准发音/音标, sentence_audio_url, listen_tip_听一听, example_sentence_跟着说, example_sentence_cn, chunk_tip_拆开记, show_chunk_tip, memory_tip_记忆小窍门, spelling_secret_拼写小秘密, 主动回忆题型, 展示模式, spelling_test_mode, 初学显示中文, 复习隐藏中文, 初始复习等级, 学习状态, 备注`
+`教材版本, 年级, 册别, Unit, Lesson, 页码, 序号, 英文, 中文, 词性, 主题分类, 课标要求, 难度, 是否短语/专名, 图片生成文件名, 图片链接, 发音链接, 标准发音/音标, sentence_audio_url, listen_tip_听一听, example_sentence_跟着说, example_sentence_cn, chunk_tip_拆开记, show_chunk_tip, memory_tip_记忆小窍门, spelling_secret_拼写小秘密, memory_strategy_记忆策略, spelling_pattern_拼写挖空, 主动回忆题型, 展示模式, spelling_test_mode, 初学显示中文, 复习隐藏中文, 初始复习等级, 学习状态, 备注`
 
 代码中的唯一规范来源为 `assets/js/modules/import-core.js`。
 
 ## 必填字段
 
-年级、难度、英文、中文、Unit、词性、`listen_tip_听一听`、`example_sentence_跟着说`、`memory_tip_记忆小窍门`、`spelling_secret_拼写小秘密`、主动回忆题型、展示模式和 `spelling_test_mode` 必填。
+年级、难度、英文、中文、Unit、词性、`listen_tip_听一听`、`example_sentence_跟着说`、主动回忆题型、展示模式和 `spelling_test_mode` 必填。
+
+`memory_tip_记忆小窍门`、`spelling_secret_拼写小秘密`、`chunk_tip_拆开记`都是可选字段；不要为了填满模板强行生成内容。
 
 当 `show_chunk_tip` 为 `TRUE` 时，`chunk_tip_拆开记`也必填。
+
+当记忆策略包含 `scene`、`spelling` 或 `compound/syllable/phrase` 时，分别必须填写对应的场景提示、拼写提示或拆分内容。
 
 ## 允许值
 
@@ -24,6 +28,15 @@
 - 拼写模式：`letter_bank`、`partial_blank`、`phrase_order`、`full_blank`
 - 布尔字段：`TRUE/FALSE`、`是/否`、`1/0`
 - 初始复习等级：`0–5`
+- 记忆策略：`none`、`image`、`scene`、`compound`、`syllable`、`phrase`、`spelling`，多项用英文分号分隔
+
+## 记忆策略规则
+
+- `taste`、`soup`、`map`、`fish`、`stone` 等单音节短词不显示「拆开记」。
+- `weekend → week + end`、`airport → air + port` 可用 `compound`。
+- `competition → com-pe-ti-tion` 这类多音节长词可用 `syllable`。
+- `look forward to → look / forward / to` 这类短语可用 `phrase`。
+- `spelling_pattern_拼写挖空` 可填 `t__t_` 这类不泄露完整答案的主动回忆模式。
 
 ## 图片规则
 

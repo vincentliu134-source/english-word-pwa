@@ -129,11 +129,33 @@
         // 2. 全局变量
         const STORAGE_KEY = 'englishWordStudyRecords';
         const MASTERY_STORAGE_KEY = 'englishWordMasteryRecords';
+        const REVIEW_QUEUE_STORAGE_KEY = 'englishWordReviewQueue';
         const CUSTOM_WORD_DATABASE_KEY = 'englishWordCustomDatabase';
         const WORD_SOURCE_KEY = 'englishWordSource';
         const IMPORT_SHEET_MODE_KEY = 'englishWordImportSheetMode';
+        const WORD_STAR_PROFILE_KEY = 'englishWordStarProfile';
         const REVIEW_INTERVAL_DAYS = [0, 1, 3, 7, 14, 30];
         const SLOW_RECALL_MS = 9000;
+        const PREVIEW_PRAISE_HOLD_MS = 1700;
+        const PREVIEW_SPELLING_PRAISE_HOLD_MS = 2100;
+        const PREVIEW_WRONG_FEEDBACK_HOLD_MS = 1250;
+        const GAME_PRAISE_HOLD_MS = 1800;
+        const GAME_WRONG_FEEDBACK_HOLD_MS = 1300;
+        const CELEBRATION_MESSAGE_HOLD_MS = 2400;
+        const IMAGE_PREFETCH_AHEAD_COUNT = 4;
+        const TTS_WORD_RATE = 0.84;
+        const TTS_PHRASE_RATE = 0.86;
+        const TTS_SENTENCE_RATE = 0.92;
+        const TTS_STORY_RATE = 0.9;
+        const TTS_NATURAL_PAUSE_MS = 180;
+        const WORD_STAR_LEVELS = [
+            { min: 0, title: '新手探险家' },
+            { min: 10, title: '单词小侦探' },
+            { min: 30, title: '星光记忆师' },
+            { min: 60, title: '词汇小队长' },
+            { min: 100, title: '英语冒险家' },
+            { min: 200, title: '词星大师' }
+        ];
         const QUESTION_TYPES = ['english_to_chinese', 'chinese_to_english', 'audio_to_english', 'spelling', 'cloze'];
         const PREVIEW_QUESTION_TYPES = ['image_to_english', 'audio_to_english', 'spelling', 'english_to_chinese'];
         const QUESTION_ERROR_TYPES = {
@@ -165,10 +187,13 @@
         let gameStarted = false;
         let initialTime = 300; // 改为可配置的变量
         let currentRecord = null;
+        let speechSequenceToken = 0;
+        let preferredEnglishVoiceCache = {};
         let currentWordSource = 'default'; // 'default' 或 'custom'
         let currentLetterBank = [];
         let selectedLetterIndices = [];
         let currentDragSource = null;
+        let selectedTargetSlot = null;
         let activeQuestion = null;
         let questionStartedAt = null;
         let currentPreviewStep = 'study';
@@ -179,8 +204,19 @@
         let previewQuizStartedAt = null;
         let previewQuizLetterBank = [];
         let previewQuizSelectedIndices = [];
+        let previewQuizSubmitting = false;
+        let previewRewardStreak = 0;
+        let previewRewardStars = 0;
         let previewAutoAdvanceTimer = null;
+        let previewAutoPronounceTimer = null;
         let previewWeakRoundActive = false;
+        let readingSourceWords = [];
+        let currentReadingStory = null;
+        let readingAnsweredIds = new Set();
+        let readingCorrectCount = 0;
+        let readingStoryVariant = 0;
+        let readingPerfectCelebrated = false;
+        let wordStarProfile = loadWordStarProfile();
 
         // 3. DOM元素获取
         const startScreen = document.getElementById('start-screen');
@@ -232,10 +268,15 @@
         const previewExample = document.getElementById('preview-example');
         const previewExampleCn = document.getElementById('preview-example-cn');
         const previewChunkCard = document.getElementById('preview-chunk-card');
+        const previewChunkTitle = document.getElementById('preview-chunk-title');
         const previewSyllableSplit = document.getElementById('preview-syllable-split');
+        const previewMemoryCard = document.getElementById('preview-memory-card');
         const previewMemoryTip = document.getElementById('preview-memory-tip');
+        const previewSpellingCard = document.getElementById('preview-spelling-card');
         const previewSpellingTip = document.getElementById('preview-spelling-tip');
+        const previewHelperEmpty = document.getElementById('preview-helper-empty');
         const previewMainActionBtn = document.getElementById('preview-main-action-btn');
+        const previewHelpActionBtn = document.getElementById('preview-help-action-btn');
         const previewStageItems = Array.from(document.querySelectorAll('[data-preview-stage]'));
         const previewQuizTitle = document.getElementById('preview-quiz-title');
         const previewQuizPrompt = document.getElementById('preview-quiz-prompt');
@@ -300,6 +341,8 @@
         const refreshReadingBtn = document.getElementById('refresh-reading-btn');
         const backToStartFromReadingBtn = document.getElementById('back-to-start-from-reading-btn');
         const readingStartGameBtn = document.getElementById('reading-start-game-btn');
+        const readingListenBtn = document.getElementById('reading-listen-btn');
+        const readingTitleEl = document.getElementById('reading-title');
         const readingEmptyEl = document.getElementById('reading-empty');
         const readingContentEl = document.getElementById('reading-content');
         const readingTargetWordsEl = document.getElementById('reading-target-words');
@@ -307,12 +350,15 @@
         const readingQuestionsListEl = document.getElementById('reading-questions-list');
         const readingClozeListEl = document.getElementById('reading-cloze-list');
         const readingSentenceBuilderEl = document.getElementById('reading-sentence-builder');
+        const readingProgressSummaryEl = document.getElementById('reading-progress-summary');
+        const readStoryBtn = document.getElementById('read-story-btn');
         const parentDailyReportEl = document.getElementById('parent-daily-report');
 
         // 4. 初始化函数
         function init() {
             syncViewportHeight();
             window.addEventListener('resize', syncViewportHeight, { passive: true });
+            initLocalTtsVoices();
             // 绑定所有事件
             bindEvents();
             // 初始化年级信息
@@ -328,12 +374,25 @@
             initWordDatabase();
             // 初始化单词来源显示
             updateWordSourceDisplay();
+            updateWordStarHud();
+            window.addEventListener('scroll', syncReadingScrollState, { passive: true });
+            document.addEventListener('click', handleDocumentClickForWordStarLevel);
+            document.addEventListener('keydown', handleWordStarLevelKeydown);
             renderRewardStars();
             updateMascotMessage('welcome');
         }
 
         function syncViewportHeight() {
             document.documentElement.style.setProperty('--app-viewport-height', `${window.innerHeight}px`);
+        }
+
+        function initLocalTtsVoices() {
+            if (!('speechSynthesis' in window)) return;
+            preferredEnglishVoiceCache = {};
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = () => {
+                preferredEnglishVoiceCache = {};
+            };
         }
 
         // 5. 事件绑定
@@ -389,10 +448,18 @@
             // 单卡片学习翻页事件
             prevWordBtn.addEventListener('click', showPreviousWord);
             nextWordBtn.addEventListener('click', showNextWord);
-            // 键盘左右键翻页
+            // 只有拼写等输入题显示提交按钮；回车等同于点击该按钮。
             document.addEventListener('keydown', (e) => {
                 if (previewScreen.classList.contains('screen-hidden')) return;
-                
+
+                if (e.key === 'Enter' && currentPreviewStep === 'quiz' && !e.isComposing) {
+                    if (!previewQuizSubmitBtn.classList.contains('hidden') && !previewQuizSubmitBtn.disabled) {
+                        e.preventDefault();
+                        previewQuizSubmitBtn.click();
+                    }
+                    return;
+                }
+
                 if (e.key === 'ArrowLeft') {
                     showPreviousWord();
                 } else if (e.key === 'ArrowRight') {
@@ -401,7 +468,8 @@
             });
             
             previewMainActionBtn.addEventListener('click', handlePreviewMainAction);
-            previewQuizSubmitBtn.addEventListener('click', submitPreviewSpellingAnswer);
+            previewHelpActionBtn.addEventListener('click', () => setPreviewStep('helper'));
+            previewQuizSubmitBtn.addEventListener('click', submitPreviewCurrentAnswer);
             
             // 卡片发音按钮
             cardPronounceBtn.addEventListener('click', function() {
@@ -426,10 +494,20 @@
             // 主页面按钮
             document.getElementById('learn-first-btn').addEventListener('click', learnFirst);
             document.getElementById('direct-game-btn').addEventListener('click', startDirectly);
-            readingBtn.addEventListener('click', goToReadingScreen);
-            refreshReadingBtn.addEventListener('click', renderReadingPractice);
+            readingBtn.addEventListener('click', () => goToReadingScreen());
+            refreshReadingBtn.addEventListener('click', () => {
+                readingStoryVariant += 1;
+                renderReadingPractice();
+            });
             backToStartFromReadingBtn.addEventListener('click', goToStartScreen);
             readingStartGameBtn.addEventListener('click', startDirectly);
+            readingListenBtn.addEventListener('click', pronounceCurrentStory);
+            readingStoryEl.addEventListener('click', handleReadingKeywordToggle);
+            readingStoryEl.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    handleReadingKeywordToggle(event);
+                }
+            });
             
             document.getElementById('back-to-start-from-preview-btn').addEventListener('click', goToStartScreen);
             
@@ -456,6 +534,7 @@
             });
             startReviewBtn.addEventListener('click', startTodayReview);
             reviewWrongBtn.addEventListener('click', startWrongWordsReview);
+            readStoryBtn.addEventListener('click', () => goToReadingScreen(gameWords));
             document.getElementById('back-to-study-btn').addEventListener('click', () => {
                 hideAllScreens();
                 showPreviewScreen();
@@ -481,6 +560,10 @@
             analysisFromGameBtn.addEventListener('click', goToAnalysisScreen);
             goToAnalysisBtn.addEventListener('click', goToAnalysisScreen);
             backToStartFromAnalysisBtn.addEventListener('click', goToStartScreen);
+            document.getElementById('word-star-level-btn')?.addEventListener('click', function(event) {
+                event.stopPropagation();
+                toggleWordStarLevelPanel();
+            });
 
             document.getElementById('game-pronounce-btn').addEventListener('click', () => {
                 if (gameWords.length > 0 && currentWordIndex < gameWords.length) {
@@ -496,8 +579,8 @@
                 // 创建教材匹配版示例数据
                 const templateData = [
                     window.ImportCore.TEMPLATE_HEADERS,
-                    ['人民教育出版社（一年级起点）', '六年级', '上册', 'Unit 1', 'Lesson 1', 'P2', 2, 'soup', '汤', 'n.', 'food', '必会', 'easy', '否', 'soup.png', '六年级单词图片/6年级上/02 soup.png', '', '', '', '点一下声音，听准发音，再跟读一遍。', 'I drink hot soup.', '我喝热汤。', '', false, '想象一碗热汤正在冒香气。', '注意字母组合 ou。', 'image_to_english;audio_to_english;spelling', 'image_first', 'letter_bank', true, true, 0, '新词', '示例行'],
-                    ['人民教育出版社（一年级起点）', '六年级', '上册', 'Unit 1', 'Lesson 1', 'P2', 5, 'the Summer Palace', '颐和园', 'proper n.', 'places / culture', '必会', 'hard', '是', 'the_summer_palace.png', '六年级单词图片/6年级上/05 the Summer Palace.png', '', '', '', '先听准每个词，再连起来跟读。', 'We visit the Summer Palace.', '我们参观颐和园。', 'the / Summer / Palace', true, '把名称和颐和园的地标画面连起来。', '三个词分开写，专名首字母大写。', 'meaning_to_word;audio_to_word;phrase_order', 'place', 'phrase_order', true, true, 0, '新词', '示例行']
+                    ['人民教育出版社（一年级起点）', '六年级', '上册', 'Unit 1', 'Lesson 1', 'P2', 2, 'soup', '汤', 'n.', 'food', '必会', 'easy', '否', 'soup.png', '六年级单词图片/6年级上/02 soup.png', '', '', '', '点一下声音，听准发音，再跟读一遍。', 'I drink hot soup.', '我喝热汤。', '', false, '想象一碗热汤正在冒香气。', '注意字母组合 ou。', 'scene;spelling', 's__p', 'image_to_english;audio_to_english;spelling', 'image_first', 'letter_bank', true, true, 0, '新词', '示例行'],
+                    ['人民教育出版社（一年级起点）', '六年级', '上册', 'Unit 1', 'Lesson 1', 'P2', 5, 'the Summer Palace', '颐和园', 'proper n.', 'places / culture', '必会', 'hard', '是', 'the_summer_palace.png', '六年级单词图片/6年级上/05 the Summer Palace.png', '', '', '', '先听准每个词，再连起来跟读。', 'We visit the Summer Palace.', '我们参观颐和园。', 'the / Summer / Palace', true, '把名称和颐和园的地标画面连起来。', '三个词分开写，专名首字母大写。', 'image;phrase;spelling', '', 'meaning_to_word;audio_to_word;phrase_order', 'place', 'phrase_order', true, true, 0, '新词', '示例行']
                 ];
                 
                 // 创建工作簿
@@ -723,6 +806,8 @@
             const exampleCn = String(item.optimizedExampleCn || item.exampleCn || '').trim();
             const memoryHook = String(item.optimizedMemoryTip || item.memoryHook || item.memoryTip || '').trim();
             const spellingTip = String(item.optimizedSpellingTip || item.spellingTip || '').trim();
+            const memoryStrategy = String(item.memoryStrategy || '').trim();
+            const spellingPattern = String(item.spellingPattern || '').trim();
             const imageUrl = String(item.image || '').trim();
             const audioUrl = String(item.audio || '').trim();
             const sentenceAudioUrl = String(item.sentenceAudio || '').trim();
@@ -757,7 +842,9 @@
                 spelling_mode: normalizeMode(item.spellingTestMode || item.spellingMode) || 'letter_bank',
                 spelling_test_mode: normalizeMode(item.spellingTestMode || item.spellingMode) || 'letter_bank',
                 spelling_secret: spellingTip,
-                show_chunk_tip: parseBooleanValue(item.showChunkTip, true),
+                memory_strategy: memoryStrategy,
+                spelling_pattern: spellingPattern,
+                show_chunk_tip: parseBooleanValue(item.showChunkTip, false),
                 show_chinese_in_learning: parseBooleanValue(item.showChineseInLearning, true),
                 hide_chinese_in_review: parseBooleanValue(item.hideChineseInReview, true),
                 mastery_level: Number.isFinite(masteryLevel) ? Math.max(0, Math.min(5, masteryLevel)) : 0,
@@ -1170,6 +1257,8 @@
 
         function loadImageWithFallback(imgEl, candidates, onMissing) {
             let index = 0;
+            imgEl.loading = imgEl.loading || 'lazy';
+            imgEl.decoding = imgEl.decoding || 'async';
             const tryNext = () => {
                 if (index >= candidates.length) {
                     imgEl.removeAttribute('src');
@@ -1185,6 +1274,24 @@
                 imgEl.onerror = null;
             };
             tryNext();
+        }
+
+        function preloadImageCandidates(candidates) {
+            (candidates || []).forEach(src => {
+                if (!src || /^data:/i.test(src)) return;
+                const image = new Image();
+                image.decoding = 'async';
+                image.src = src;
+            });
+        }
+
+        function preloadWordImages(words, startIndex = 0, count = IMAGE_PREFETCH_AHEAD_COUNT) {
+            if (!Array.isArray(words) || words.length === 0) return;
+            const start = Math.max(0, Number(startIndex) || 0);
+            const end = Math.min(words.length, start + Math.max(1, Number(count) || IMAGE_PREFETCH_AHEAD_COUNT));
+            for (let index = start; index < end; index++) {
+                preloadImageCandidates(getWordImageCandidates(words[index]));
+            }
         }
 
         function normalizeWordForGame(text) {
@@ -1223,43 +1330,15 @@
                 return `先看图片，说出“${chinese}”，再跟读两遍。`;
             }
 
-            const firstLetter = cleanWord[0].toUpperCase();
-            const splitWord = splitWordForReading(english);
-            return `音节拆分：${splitWord}。场景联想：看图先说“${chinese}”，再说 ${english}。易错字母：开头是 ${firstLetter}，一共 ${cleanWord.length} 个字母。`;
+            return `看图想象“${chinese}”的真实场景，再说出 ${english}。`;
         }
 
         function getMemoryTipForWord(word) {
-            const importedTip = String(
-                word.memory_hook
-                || word.memoryTip
-                || word.memory_tip
-                || word.optimizedMemoryTip
-                || word.memoryHook
-                || ''
-            ).trim();
-            return createThreePartMemoryTip(word, importedTip);
+            return window.MemoryCore.getMemoryTip(word);
         }
 
         function createThreePartMemoryTip(word, importedTip = '') {
-            const english = String(word.english || '').trim();
-            const chinese = String(word.chinese || '').trim();
-            const cleanWord = normalizeWordForGame(english);
-            if (!cleanWord) {
-                return importedTip || `音节拆分：先听一遍。场景联想：看图说“${chinese}”。易错字母：再遮住中文拼一次。`;
-            }
-
-            const split = getSyllableSplitForWord(word);
-            const spelling = getSpellingSecretForWord(word);
-            const genericPatterns = ['小学生记法', '先看图片', '再听一遍', '遮住中文', '最后遮住'];
-            const usefulImportedTip = importedTip
-                && importedTip.length >= 4
-                && !genericPatterns.some(pattern => importedTip.includes(pattern));
-            const scene = usefulImportedTip
-                ? importedTip.replace(/^联想记忆[:：]?/, '').replace(/^记忆[:：]?/, '').trim()
-                : `看图先说“${chinese}”，再把画面和 ${english} 连起来。`;
-            const cleanScene = scene.replace(/[。.!！]+$/g, '');
-
-            return `音节拆分：${split}。场景联想：${cleanScene}。易错字母：${spelling}`;
+            return window.MemoryCore.getMemoryTip({ ...word, memory_hook: importedTip || word.memory_hook });
         }
 
         function sanitizeShortText(text, maxLength = 72) {
@@ -1331,18 +1410,11 @@
             if (cleanWord.length <= 4) {
                 return '短词不要死背，听一遍，再按字母音快速拼出来。';
             }
-            return `把 ${word.english} 分成 ${splitWordForReading(word.english || '')}，一段一段读。`;
+            return `先听标准发音，再跟读 ${word.english}。`;
         }
 
         function getSyllableSplitForWord(word) {
-            if (String(word.chunk_tip || word.chunkTip || '').trim()) {
-                return String(word.chunk_tip || word.chunkTip).trim();
-            }
-            const split = String(word.syllable_split || word.syllableSplit || word.syllable || '').trim();
-            if (normalizeWordForGame(word.english || '') === 'weekend') {
-                return 'week = 一周；end = 结束；weekend = 周末。';
-            }
-            return split || splitWordForReading(word.english || '');
+            return window.MemoryCore.getChunkTip(word);
         }
 
         function getSpellingHelperForTest(word) {
@@ -1350,18 +1422,7 @@
         }
 
         function shouldShowChunkTipForWord(word) {
-            if (word.show_chunk_tip === false) {
-                return false;
-            }
-            const chunk = String(word.chunk_tip || word.syllable_split || '').trim();
-            const cleanWord = normalizeWordForGame(word.english || '');
-            if (!chunk || chunk.toLowerCase() === String(word.english || '').trim().toLowerCase()) {
-                return false;
-            }
-            if (!String(word.english || '').includes(' ') && cleanWord.length <= 4 && !chunk.includes('-') && !chunk.includes('/')) {
-                return false;
-            }
-            return true;
+            return Boolean(window.MemoryCore.getChunkTip(word));
         }
 
         function escapeRegExp(text) {
@@ -1369,36 +1430,7 @@
         }
 
         function getSpellingSecretForWord(word) {
-            const english = String(word.english || '').trim();
-            const rawTip = String(
-                word.spelling_secret
-                || word.spellingTip
-                || word.spelling_tip
-                || word.optimizedSpellingTip
-                || word.spellingSecret
-                || ''
-            ).trim();
-            let tip = rawTip || '留意容易写错的字母组合。';
-            if (english) {
-                tip = tip.replace(new RegExp(`(核对|拼写|写出|记住)?\\s*${escapeRegExp(english)}\\s*`, 'ig'), '').trim();
-                const slashForm = english.split(/\s+/).map(escapeRegExp).join('\\s*/\\s*');
-                tip = tip.replace(new RegExp(`(核对|拼写|写出|记住)?\\s*${slashForm}\\s*`, 'ig'), '').trim();
-            }
-            tip = tip
-                .replace(/^按词块写[:：]?\s*/g, '')
-                .replace(/看、遮、拼[，,、]?(再)?核对。?/g, '')
-                .replace(/答错的词当天再出现一次。?/g, '')
-                .replace(/再核对。?/g, '')
-                .trim();
-            if (!tip) {
-                const cleanWord = normalizeWordForGame(english);
-                if (cleanWord.includes('ou')) return '注意 ou 这个字母组合。';
-                if (cleanWord.endsWith('te')) return '中间听清楚，结尾是 te。';
-                if (cleanWord.includes('pp')) return '中间有两个 p。';
-                if (cleanWord.endsWith('um')) return '结尾是 um。';
-                return '留意容易写错的字母组合。';
-            }
-            return sanitizeShortText(tip, 56);
+            return sanitizeShortText(window.MemoryCore.getSpellingTip(word), 56);
         }
 
         function getReadTipForWord(word) {
@@ -1409,7 +1441,7 @@
         }
 
         function getSentenceAudioUrlForWord(word) {
-            return String(word.sentence_audio_url || word.sentenceAudio || '').trim();
+            return String(word.sentence_audio_url || word.sentenceAudioUrl || word.sentenceAudio || '').trim();
         }
 
         function getSpellingTipForWord(word) {
@@ -1417,7 +1449,7 @@
         }
 
         function getAudioUrlForWord(word) {
-            return String(word.audio_url || word.audio || '').trim();
+            return String(word.audio_url || word.audioUrl || word.audio || '').trim();
         }
 
         function loadMasteryRecords() {
@@ -1433,10 +1465,98 @@
             localStorage.setItem(MASTERY_STORAGE_KEY, JSON.stringify(masteryRecords));
         }
 
+        function loadReviewQueue() {
+            try {
+                return JSON.parse(localStorage.getItem(REVIEW_QUEUE_STORAGE_KEY) || '{}');
+            } catch (error) {
+                console.warn('复习队列读取失败，已重置:', error);
+                return {};
+            }
+        }
+
+        function saveReviewQueue(reviewQueue) {
+            localStorage.setItem(REVIEW_QUEUE_STORAGE_KEY, JSON.stringify(reviewQueue));
+        }
+
         function addDays(date, days) {
             const result = new Date(date);
             result.setDate(result.getDate() + days);
             return result;
+        }
+
+        function getReviewDueAt(word) {
+            return word.nextReviewAt || word.next_review_at || word.review_due_at || null;
+        }
+
+        function getReviewWeaknessScore(word, now = new Date()) {
+            const dueAt = getReviewDueAt(word);
+            const dueMs = dueAt ? new Date(dueAt).getTime() : 0;
+            const overdueDays = dueMs ? Math.max(0, Math.floor((now.getTime() - dueMs) / 86400000)) : 0;
+            const statusScore = word.status === 'learning' ? 80 : word.status === 'review' ? 40 : 10;
+            const wrongScore = Math.min(50, Number(word.wrong_count || word.wrongCount || word.totalWrong || 0) * 10);
+            const slowScore = Math.min(24, Number(word.slowRecallCount || word.slow_recall_count || 0) * 6);
+            const freshWrongScore = word.lastWrongAt || word.last_wrong_at ? 12 : 0;
+            return statusScore + wrongScore + slowScore + freshWrongScore + Math.min(30, overdueDays * 3);
+        }
+
+        function getReviewReason(word) {
+            const errors = Array.isArray(word.error_types) ? word.error_types : [];
+            if ((word.wrong_count || word.wrongCount || word.totalWrong || 0) > 0) return '错题复习';
+            if (errors.includes('slow_recall')) return '反应偏慢';
+            if (errors.includes('spelling_error')) return '拼写巩固';
+            if (errors.includes('pronunciation_error')) return '听音巩固';
+            if (word.status === 'learning') return '薄弱点';
+            return '间隔复习';
+        }
+
+        function createReviewQueueEntry(key, word, now = new Date()) {
+            const dueAt = getReviewDueAt(word) || now.toISOString();
+            return {
+                key,
+                english: word.english,
+                chinese: word.chinese,
+                grade: word.grade || currentGrade,
+                difficulty: word.difficulty || currentDifficulty,
+                dueAt,
+                status: word.status || 'review',
+                reason: getReviewReason(word),
+                priority: getReviewWeaknessScore(word, now),
+                lastStudiedAt: word.lastStudiedAt || word.lastReviewedAt || word.last_reviewed_at || '',
+                updatedAt: now.toISOString()
+            };
+        }
+
+        function updateReviewQueueAfterRecord(masteryRecords = loadMasteryRecords()) {
+            const now = new Date();
+            const nextQueue = {};
+            Object.entries(masteryRecords || {}).forEach(([key, word]) => {
+                const dueAt = getReviewDueAt(word);
+                const shouldQueue = Boolean(dueAt)
+                    && String(word.english || '').trim();
+                if (!shouldQueue) return;
+                nextQueue[key] = createReviewQueueEntry(key, word, now);
+            });
+            saveReviewQueue(nextQueue);
+            return nextQueue;
+        }
+
+        function getDueReviewQueueWords(limit = 8) {
+            const now = new Date();
+            const masteryRecords = loadMasteryRecords();
+            const queue = updateReviewQueueAfterRecord(masteryRecords);
+            return Object.values(queue)
+                .filter(item => item.dueAt && new Date(item.dueAt) <= now)
+                .sort((a, b) => {
+                    if (b.priority !== a.priority) return b.priority - a.priority;
+                    return new Date(a.dueAt) - new Date(b.dueAt);
+                })
+                .slice(0, limit)
+                .map(item => ({
+                    ...(masteryRecords[item.key] || {}),
+                    review_due_at: item.dueAt,
+                    review_reason: item.reason,
+                    review_priority: item.priority
+                }));
         }
 
         function createMasteryEntry(word, record) {
@@ -1460,6 +1580,14 @@
                 wrong_count: 0,
                 error_types: [],
                 memoryTip: getMemoryTipForWord(word),
+                category: word.category || word.topic || '',
+                topic: word.topic || word.category || '',
+                partOfSpeech: word.partOfSpeech || word.part_of_speech || '',
+                memory_strategy: word.memory_strategy || word.memoryStrategy || '',
+                spelling_pattern: word.spelling_pattern || word.spellingPattern || '',
+                chunk_tip: word.chunk_tip || word.chunkTip || '',
+                show_chunk_tip: word.show_chunk_tip ?? word.showChunkTip ?? false,
+                test_flow: word.test_flow || word.testFlow || word.test_methods || '',
                 grade: record.grade,
                 gradeText: record.gradeText,
                 difficulty: record.difficulty,
@@ -1508,6 +1636,14 @@
                 entry.memory_hook = getMemoryTipForWord(word);
                 entry.letter_image_story = word.letter_image_story || getSpellingTipForWord(word);
                 entry.memoryTip = getMemoryTipForWord(word);
+                entry.category = word.category || word.topic || entry.category || '';
+                entry.topic = word.topic || word.category || entry.topic || '';
+                entry.partOfSpeech = word.partOfSpeech || word.part_of_speech || entry.partOfSpeech || '';
+                entry.memory_strategy = word.memory_strategy || word.memoryStrategy || entry.memory_strategy || '';
+                entry.spelling_pattern = word.spelling_pattern || word.spellingPattern || entry.spelling_pattern || '';
+                entry.chunk_tip = word.chunk_tip || word.chunkTip || entry.chunk_tip || '';
+                entry.show_chunk_tip = word.show_chunk_tip ?? word.showChunkTip ?? entry.show_chunk_tip ?? false;
+                entry.test_flow = word.test_flow || word.testFlow || word.test_methods || entry.test_flow || '';
                 entry.grade = record.grade;
                 entry.gradeText = record.gradeText;
                 entry.difficulty = record.difficulty;
@@ -1554,20 +1690,11 @@
             });
 
             saveMasteryRecords(masteryRecords);
+            updateReviewQueueAfterRecord(masteryRecords);
         }
 
         function getDueReviewWords(limit = 8) {
-            const now = new Date();
-            return Object.values(loadMasteryRecords())
-                .filter(word => (word.nextReviewAt || word.next_review_at) && new Date(word.nextReviewAt || word.next_review_at) <= now)
-                .sort((a, b) => {
-                    const statusWeight = { learning: 0, review: 1, mastered: 2, new: 3 };
-                    const aWeight = statusWeight[a.status] ?? 3;
-                    const bWeight = statusWeight[b.status] ?? 3;
-                    if (aWeight !== bWeight) return aWeight - bWeight;
-                    return new Date(a.nextReviewAt || a.next_review_at) - new Date(b.nextReviewAt || b.next_review_at);
-                })
-                .slice(0, limit);
+            return getDueReviewQueueWords(limit);
         }
 
         function getLearnedWords(limit = 12) {
@@ -1699,19 +1826,11 @@
         }
 
         function makePartialBlankPattern(answer) {
-            const letters = String(answer || '').replace(/[^a-zA-Z]/g, '');
-            let letterIndex = -1;
-            return String(answer || '').split('').map(char => {
-                if (!/[a-z]/i.test(char)) return char;
-                letterIndex++;
-                if (letters.length <= 4) {
-                    return letterIndex === 0 || letterIndex === letters.length - 1 ? char : '_';
-                }
-                if (letters.length === 5) {
-                    return [0, 2, 3].includes(letterIndex) ? char : '_';
-                }
-                return letterIndex === 0 || letterIndex % 2 === 0 ? char : '_';
-            }).join('');
+            const word = gameWords[currentPreviewIndex];
+            if (word && String(word.english || '').trim().toLowerCase() === String(answer || '').trim().toLowerCase()) {
+                return window.MemoryCore.getSpellingPattern(word);
+            }
+            return window.MemoryCore.getSpellingPattern({ english: answer });
         }
 
         function createActiveQuestion(word, index) {
@@ -1804,13 +1923,25 @@
                     originalIndex: index
                 }))
             );
-            selectedLetterIndices = [];
+            selectedLetterIndices = Array(sanitizeWordCharacters(word).length).fill(null);
             currentDragSource = null;
+            selectedTargetSlot = null;
             renderLetterGame();
         }
 
         function getSelectedAnswer() {
-            return selectedLetterIndices.map(index => currentLetterBank[index].char).join('');
+            return selectedLetterIndices
+                .map(index => Number.isInteger(index) ? currentLetterBank[index].char : '')
+                .join('');
+        }
+
+        function hasPlacedLetters() {
+            return selectedLetterIndices.some(Number.isInteger);
+        }
+
+        function isLetterAnswerComplete(targetLength) {
+            return selectedLetterIndices.length === targetLength
+                && selectedLetterIndices.every(Number.isInteger);
         }
 
         function renderLetterGame() {
@@ -1822,14 +1953,20 @@
             for (let i = 0; i < targetLength; i++) {
                 const slot = document.createElement('div');
                 const selectedBankIndex = selectedLetterIndices[i];
-                const filledChar = selectedBankIndex !== undefined
+                const filledChar = Number.isInteger(selectedBankIndex)
                     ? (preserveCase ? currentLetterBank[selectedBankIndex].char : currentLetterBank[selectedBankIndex].char.toLowerCase())
                     : '';
-                slot.className = `answer-slot ${filledChar ? 'filled' : ''}`;
+                slot.className = `answer-slot ${filledChar ? 'filled' : ''} ${selectedTargetSlot === i ? 'selected-target' : ''}`;
                 slot.dataset.position = String(i);
                 slot.addEventListener('dragover', handleLetterDragOver);
                 slot.addEventListener('dragleave', handleLetterDragLeave);
                 slot.addEventListener('drop', (event) => handleAnswerSlotDrop(event, i));
+                slot.addEventListener('click', () => {
+                    if (!filledChar) {
+                        selectedTargetSlot = i;
+                        renderLetterGame();
+                    }
+                });
 
                 if (filledChar) {
                     const selectedTile = document.createElement('button');
@@ -1839,7 +1976,10 @@
                     selectedTile.draggable = true;
                     selectedTile.addEventListener('dragstart', (event) => handleLetterDragStart(event, 'selected', i));
                     selectedTile.addEventListener('dragend', handleLetterDragEnd);
-                    selectedTile.addEventListener('click', () => removeSelectedLetterAt(i));
+                    selectedTile.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        removeSelectedLetterAt(i);
+                    });
                     slot.appendChild(selectedTile);
                 } else {
                     slot.textContent = '_';
@@ -1868,44 +2008,59 @@
                 letterBankEl.appendChild(letterBtn);
             });
 
-            removeLetterBtn.disabled = selectedLetterIndices.length === 0;
-            clearAnswerBtn.disabled = selectedLetterIndices.length === 0;
+            removeLetterBtn.disabled = !hasPlacedLetters();
+            clearAnswerBtn.disabled = !hasPlacedLetters();
             shuffleLettersBtn.disabled = currentLetterBank.length === 0;
-            document.getElementById('submit-btn').disabled = selectedLetterIndices.length !== targetLength;
+            document.getElementById('submit-btn').disabled = !isLetterAnswerComplete(targetLength);
         }
 
         function selectLetter(index) {
             if (selectedLetterIndices.includes(index)) {
                 return;
             }
-            selectedLetterIndices.push(index);
+            const targetPosition = Number.isInteger(selectedTargetSlot)
+                ? selectedTargetSlot
+                : selectedLetterIndices.findIndex(slotIndex => !Number.isInteger(slotIndex));
+            if (targetPosition === -1) {
+                return;
+            }
+            selectedLetterIndices[targetPosition] = index;
+            selectedTargetSlot = null;
             renderLetterGame();
         }
 
-        function insertSelectedLetter(bankIndex, targetPosition) {
+        function placeBankLetter(bankIndex, targetPosition) {
             if (selectedLetterIndices.includes(bankIndex)) {
                 return;
             }
-            const insertAt = Math.max(0, Math.min(targetPosition, selectedLetterIndices.length));
-            selectedLetterIndices.splice(insertAt, 0, bankIndex);
+            if (targetPosition < 0 || targetPosition >= selectedLetterIndices.length) {
+                return;
+            }
+            selectedLetterIndices[targetPosition] = bankIndex;
         }
 
         function moveSelectedLetter(fromPosition, targetPosition) {
-            if (fromPosition < 0 || fromPosition >= selectedLetterIndices.length) {
+            if (fromPosition < 0 || fromPosition >= selectedLetterIndices.length
+                || targetPosition < 0 || targetPosition >= selectedLetterIndices.length
+                || fromPosition === targetPosition) {
                 return;
             }
 
-            const [movedIndex] = selectedLetterIndices.splice(fromPosition, 1);
-            const normalizedTarget = fromPosition < targetPosition ? targetPosition - 1 : targetPosition;
-            const adjustedTarget = Math.max(0, Math.min(normalizedTarget, selectedLetterIndices.length));
-            selectedLetterIndices.splice(adjustedTarget, 0, movedIndex);
+            const movedIndex = selectedLetterIndices[fromPosition];
+            if (!Number.isInteger(movedIndex)) {
+                return;
+            }
+            const replacedIndex = selectedLetterIndices[targetPosition];
+            selectedLetterIndices[targetPosition] = movedIndex;
+            selectedLetterIndices[fromPosition] = Number.isInteger(replacedIndex) ? replacedIndex : null;
         }
 
         function removeSelectedLetterAt(position) {
             if (position < 0 || position >= selectedLetterIndices.length) {
                 return;
             }
-            selectedLetterIndices.splice(position, 1);
+            selectedLetterIndices[position] = null;
+            selectedTargetSlot = position;
             renderLetterGame();
         }
 
@@ -1947,12 +2102,13 @@
             }
 
             if (currentDragSource.type === 'bank') {
-                insertSelectedLetter(currentDragSource.index, targetPosition);
+                placeBankLetter(currentDragSource.index, targetPosition);
             } else if (currentDragSource.type === 'selected') {
                 moveSelectedLetter(currentDragSource.index, targetPosition);
             }
 
             currentDragSource = null;
+            selectedTargetSlot = null;
             renderLetterGame();
         }
 
@@ -1964,29 +2120,35 @@
             }
 
             if (currentDragSource.type === 'selected') {
-                selectedLetterIndices.splice(currentDragSource.index, 1);
+                selectedLetterIndices[currentDragSource.index] = null;
             }
 
             currentDragSource = null;
+            selectedTargetSlot = null;
             renderLetterGame();
         }
 
         function removeLastLetter() {
-            if (selectedLetterIndices.length === 0) {
+            const lastFilledPosition = selectedLetterIndices.reduce((lastPosition, bankIndex, position) => (
+                Number.isInteger(bankIndex) ? position : lastPosition
+            ), -1);
+            if (lastFilledPosition === -1) {
                 return;
             }
-            removeSelectedLetterAt(selectedLetterIndices.length - 1);
+            removeSelectedLetterAt(lastFilledPosition);
         }
 
         function clearSelectedLetters() {
-            selectedLetterIndices = [];
+            selectedLetterIndices = selectedLetterIndices.map(() => null);
             currentDragSource = null;
+            selectedTargetSlot = null;
             renderLetterGame();
         }
 
         function shuffleCurrentLetters() {
-            const selectedChars = getSelectedAnswer().split('');
-            const selectedCount = selectedLetterIndices.length;
+            const selectedCharsBySlot = selectedLetterIndices.map(index => (
+                Number.isInteger(index) ? currentLetterBank[index].char : null
+            ));
             const currentWord = gameWords[currentWordIndex];
             currentLetterBank = shuffleArray(
                 sanitizeWordCharacters(currentWord).map((char, index) => ({
@@ -1995,16 +2157,19 @@
                     originalIndex: index
                 }))
             );
-            selectedLetterIndices = [];
-
-            selectedChars.forEach(char => {
-                const index = currentLetterBank.findIndex((item, itemIndex) => {
-                    return item.char === char && !selectedLetterIndices.includes(itemIndex);
-                });
-                if (index !== -1 && selectedLetterIndices.length < selectedCount) {
-                    selectedLetterIndices.push(index);
+            const usedBankIndices = new Set();
+            selectedLetterIndices = selectedCharsBySlot.map(char => {
+                if (!char) return null;
+                const bankIndex = currentLetterBank.findIndex((item, itemIndex) => (
+                    item.char === char && !usedBankIndices.has(itemIndex)
+                ));
+                if (bankIndex !== -1) {
+                    usedBankIndices.add(bankIndex);
+                    return bankIndex;
                 }
+                return null;
             });
+            selectedTargetSlot = null;
 
             renderLetterGame();
         }
@@ -2020,7 +2185,7 @@
             message.className = 'celebration-message';
             message.textContent = cheers[Math.floor(Math.random() * cheers.length)];
             celebrationLayer.appendChild(message);
-            setTimeout(() => message.remove(), 1850);
+            setTimeout(() => message.remove(), CELEBRATION_MESSAGE_HOLD_MS);
 
             for (let i = 0; i < burstCount; i++) {
                 const particle = document.createElement('span');
@@ -2033,8 +2198,40 @@
                 particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
                 particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
                 celebrationLayer.appendChild(particle);
-                setTimeout(() => particle.remove(), 1600);
+                setTimeout(() => particle.remove(), 1800);
             }
+        }
+
+        function launchReadingPerfectCelebration() {
+            const shapes = ['⭐', '🌟', '✨', '📖', '🎉'];
+            const burstCount = 36;
+            const overlay = document.createElement('div');
+            overlay.className = 'reading-perfect-celebration';
+            overlay.innerHTML = `
+                <div class="reading-perfect-card">
+                    <div class="reading-perfect-badge">⭐</div>
+                    <div class="reading-perfect-title">阅读全对！</div>
+                    <div class="reading-perfect-copy">你把小故事里的单词都认出来啦。</div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            playCelebrationSound();
+
+            for (let i = 0; i < burstCount; i++) {
+                const particle = document.createElement('span');
+                const angle = (Math.PI * 2 * i) / burstCount;
+                const distance = 80 + Math.random() * 160;
+                particle.className = 'reading-perfect-particle';
+                particle.textContent = shapes[i % shapes.length];
+                particle.style.left = `${42 + Math.random() * 16}%`;
+                particle.style.top = `${34 + Math.random() * 16}%`;
+                particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                overlay.appendChild(particle);
+            }
+
+            setTimeout(() => overlay.classList.add('leaving'), 2200);
+            setTimeout(() => overlay.remove(), 2850);
         }
 
         function playCelebrationSound() {
@@ -2096,6 +2293,289 @@
                 star.className = `playful-reward-star ${i < filledStars ? 'filled' : ''}`;
                 star.textContent = i < filledStars ? '⭐' : '☆';
                 rewardStarsEl.appendChild(star);
+            }
+        }
+
+        function loadWordStarProfile() {
+            const today = new Date().toISOString().slice(0, 10);
+            try {
+                const rawProfile = localStorage.getItem(WORD_STAR_PROFILE_KEY);
+                const parsedProfile = rawProfile ? JSON.parse(rawProfile) : {};
+                const totalStars = Number(parsedProfile.totalStars || 0);
+                return {
+                    totalStars,
+                    todayStars: parsedProfile.date === today ? Number(parsedProfile.todayStars || 0) : 0,
+                    streak: Number(parsedProfile.streak || 0),
+                    date: today,
+                    lastTitle: parsedProfile.lastTitle || getWordStarTitle(totalStars)
+                };
+            } catch (error) {
+                return { totalStars: 0, todayStars: 0, streak: 0, date: today, lastTitle: getWordStarTitle(0) };
+            }
+        }
+
+        function saveWordStarProfile() {
+            try {
+                localStorage.setItem(WORD_STAR_PROFILE_KEY, JSON.stringify(wordStarProfile));
+            } catch (error) {
+                console.warn('词星数据保存失败', error);
+            }
+        }
+
+        function getWordStarTitle(totalStars = wordStarProfile.totalStars) {
+            return getWordStarLevel(totalStars).title;
+        }
+
+        function getWordStarLevel(totalStars = wordStarProfile.totalStars) {
+            const normalizedStars = Math.max(0, Number(totalStars || 0));
+            let levelIndex = 0;
+            WORD_STAR_LEVELS.forEach((level, index) => {
+                if (normalizedStars >= level.min) {
+                    levelIndex = index;
+                }
+            });
+            const level = WORD_STAR_LEVELS[levelIndex] || WORD_STAR_LEVELS[0];
+            const nextLevel = WORD_STAR_LEVELS[levelIndex + 1] || null;
+            const span = nextLevel ? nextLevel.min - level.min : 1;
+            const progress = nextLevel ? Math.min(span, normalizedStars - level.min) : span;
+            const progressRatio = nextLevel ? progress / span : 1;
+            return {
+                ...level,
+                nextTitle: nextLevel?.title || '',
+                nextMin: nextLevel?.min || null,
+                progress,
+                span,
+                progressRatio,
+                isMaxLevel: !nextLevel
+            };
+        }
+
+        function updateWordStarHud() {
+            const scoreEl = document.getElementById('score');
+            const meterEl = document.getElementById('word-star-meter');
+            const titleEl = document.getElementById('word-star-title');
+            const progressEl = document.getElementById('word-star-progress');
+            const level = getWordStarLevel();
+            const progressText = level.isMaxLevel
+                ? `${wordStarProfile.totalStars}+`
+                : `${level.progress}/${level.span}`;
+
+            if (scoreEl) {
+                scoreEl.textContent = progressText;
+                scoreEl.title = `${level.title} · 总 ${wordStarProfile.totalStars} 颗 · 今日 +${wordStarProfile.todayStars}`;
+                scoreEl.dataset.wordStarTitle = level.title;
+            }
+            if (titleEl) {
+                titleEl.textContent = level.title;
+            }
+            if (progressEl) {
+                progressEl.style.width = `${Math.round(level.progressRatio * 100)}%`;
+            }
+            if (meterEl) {
+                meterEl.title = `${level.title} · 总 ${wordStarProfile.totalStars} 颗 · 今日 +${wordStarProfile.todayStars}`;
+                meterEl.dataset.wordStarTitle = level.title;
+                meterEl.dataset.wordStarTotal = String(wordStarProfile.totalStars);
+                meterEl.classList.toggle('max-level', level.isMaxLevel);
+            }
+            renderWordStarLevelPanel();
+        }
+
+        function resetWordStarStreak() {
+            wordStarProfile.streak = 0;
+            saveWordStarProfile();
+            updateWordStarHud();
+        }
+
+        function awardWordStars(amount = 1, source = '练习', detail = '') {
+            const today = new Date().toISOString().slice(0, 10);
+            if (wordStarProfile.date !== today) {
+                wordStarProfile.date = today;
+                wordStarProfile.todayStars = 0;
+            }
+            const previousTitle = getWordStarTitle(wordStarProfile.totalStars);
+            wordStarProfile.totalStars += amount;
+            wordStarProfile.todayStars += amount;
+            wordStarProfile.streak += 1;
+            const title = getWordStarTitle();
+            const titleUpgraded = title !== previousTitle;
+            wordStarProfile.lastTitle = title;
+            saveWordStarProfile();
+            updateWordStarHud();
+            showWordStarReward({ amount, source, detail, title, titleUpgraded, streak: wordStarProfile.streak, anchorEl: document.activeElement });
+        }
+
+        function playWordStarCollectSound() {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return;
+                const audioContext = window.wordStarAudioContext || new AudioContextClass();
+                window.wordStarAudioContext = audioContext;
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume?.();
+                }
+
+                const now = audioContext.currentTime;
+                const gainNode = audioContext.createGain();
+                gainNode.gain.setValueAtTime(0.0001, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.052, now + 0.018);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+                gainNode.connect(audioContext.destination);
+
+                [880, 1320].forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const startAt = now + index * 0.035;
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(frequency, startAt);
+                    oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.22, startAt + 0.12);
+                    oscillator.connect(gainNode);
+                    oscillator.start(startAt);
+                    oscillator.stop(startAt + 0.18);
+                });
+            } catch (error) {
+                // 浏览器可能会在非用户手势里禁止音效，安静失败即可。
+            }
+        }
+
+        function showWordStarReward({ amount, source, detail, title, titleUpgraded, streak, anchorEl = null }) {
+            const meterEl = document.getElementById('word-star-meter');
+            if (!meterEl) return;
+
+            const targetEl = document.getElementById('word-star-meter-icon') || meterEl;
+            const validAnchor = anchorEl && anchorEl.getBoundingClientRect ? anchorEl : null;
+            const sourceRect = validAnchor?.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
+            const startX = sourceRect ? sourceRect.left + sourceRect.width / 2 : window.innerWidth / 2;
+            const startY = sourceRect ? sourceRect.top + sourceRect.height / 2 : window.innerHeight / 2;
+            const endX = targetRect.left + targetRect.width / 2;
+            const endY = targetRect.top + targetRect.height / 2;
+            const flyCount = Math.min(Math.max(1, amount), 3);
+
+            meterEl.classList.remove('word-star-meter-pop');
+            requestAnimationFrame(() => meterEl.classList.add('word-star-meter-pop'));
+            setTimeout(() => meterEl.classList.remove('word-star-meter-pop'), 620);
+            playWordStarCollectSound();
+
+            for (let i = 0; i < flyCount; i++) {
+                const star = document.createElement('span');
+                star.className = 'word-star-fly';
+                star.textContent = '⭐';
+                star.style.setProperty('--from-x', `${startX + (i - 1) * 10}px`);
+                star.style.setProperty('--from-y', `${startY + i * 4}px`);
+                star.style.setProperty('--mid-x', `${startX + (endX - startX) * 0.66 + (i - 1) * 10}px`);
+                star.style.setProperty('--mid-y', `${startY + (endY - startY) * 0.28 - 34 - i * 5}px`);
+                star.style.setProperty('--to-x', `${endX}px`);
+                star.style.setProperty('--to-y', `${endY}px`);
+                star.style.animationDelay = `${i * 42}ms`;
+                document.body.appendChild(star);
+                setTimeout(() => star.remove(), 760 + i * 42);
+            }
+
+            if (titleUpgraded) {
+                showWordStarUpgrade({ title, source, detail, streak });
+            }
+        }
+
+        function showWordStarUpgrade({ title, source, detail, streak }) {
+            const oldUpgrade = document.querySelector('.word-star-upgrade');
+            if (oldUpgrade) oldUpgrade.remove();
+
+            const meterEl = document.getElementById('word-star-meter');
+            const meterRect = meterEl?.getBoundingClientRect();
+            const upgrade = document.createElement('div');
+            upgrade.className = 'word-star-upgrade';
+            upgrade.innerHTML = `
+                <span>升级啦</span>
+                <strong>${escapeHtml(title)}</strong>
+                <small>${escapeHtml(source)}${detail ? ` · ${escapeHtml(detail)}` : ''}${streak >= 2 ? ` · 连对 ${streak}` : ''}</small>
+            `;
+            if (meterRect) {
+                upgrade.style.top = `${Math.max(12, meterRect.bottom + 8)}px`;
+                upgrade.style.left = `${Math.min(window.innerWidth - 260, Math.max(12, meterRect.left))}px`;
+            }
+            document.body.appendChild(upgrade);
+            requestAnimationFrame(() => upgrade.classList.add('show'));
+            setTimeout(() => upgrade.classList.add('leaving'), 2500);
+            setTimeout(() => upgrade.remove(), 3100);
+        }
+
+        function toggleWordStarLevelPanel() {
+            const existingPanel = document.querySelector('.word-star-level-panel');
+            const triggerBtn = document.getElementById('word-star-level-btn');
+            const shouldShow = !existingPanel?.classList.contains('show');
+            if (!shouldShow) {
+                closeWordStarLevelPanel();
+                return;
+            }
+            renderWordStarLevelPanel({ forceShow: true });
+            triggerBtn?.setAttribute('aria-expanded', 'true');
+        }
+
+        function renderWordStarLevelPanel(options = {}) {
+            const { forceShow = false } = options;
+            const triggerBtn = document.getElementById('word-star-level-btn');
+            let panel = document.querySelector('.word-star-level-panel');
+            const isOpen = forceShow || panel?.classList.contains('show');
+            if (!isOpen && panel) return;
+            if (!triggerBtn || (!isOpen && !forceShow)) return;
+
+            const currentLevel = getWordStarLevel();
+            const totalStars = wordStarProfile.totalStars;
+            const levelItems = WORD_STAR_LEVELS.map((level, index) => {
+                const next = WORD_STAR_LEVELS[index + 1];
+                const isCurrent = currentLevel.title === level.title;
+                const rangeText = next ? `${level.min}–${next.min - 1} 颗` : `${level.min}+ 颗`;
+                return `
+                    <div class="word-star-level-item ${isCurrent ? 'current' : ''}">
+                        <span class="level-icon">${isCurrent ? '⭐' : '☆'}</span>
+                        <span>
+                            <strong>${escapeHtml(level.title)}</strong>
+                            <small>${isCurrent ? `当前 ${totalStars} 颗星` : rangeText}</small>
+                        </span>
+                        <span class="level-target">${level.min}+</span>
+                    </div>
+                `;
+            }).join('');
+
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.className = 'word-star-level-panel';
+                panel.setAttribute('role', 'dialog');
+                panel.setAttribute('aria-label', '词星等级说明');
+                document.body.appendChild(panel);
+            }
+
+            panel.innerHTML = `
+                <h3>词星等级</h3>
+                <p>${currentLevel.isMaxLevel ? '已经到达最高称号，继续积累词星。' : `距离“${escapeHtml(currentLevel.nextTitle)}”还差 ${Math.max(0, currentLevel.span - currentLevel.progress)} 颗星。`}</p>
+                <div class="word-star-level-list">${levelItems}</div>
+            `;
+
+            const triggerRect = triggerBtn.getBoundingClientRect();
+            const panelWidth = Math.min(360, window.innerWidth - 24);
+            panel.style.top = `${Math.max(12, triggerRect.bottom + 10)}px`;
+            panel.style.left = `${Math.min(window.innerWidth - panelWidth - 12, Math.max(12, triggerRect.right - panelWidth))}px`;
+            requestAnimationFrame(() => {
+                panel.classList.add('show');
+                triggerBtn.setAttribute('aria-expanded', 'true');
+            });
+        }
+
+        function closeWordStarLevelPanel() {
+            const panel = document.querySelector('.word-star-level-panel');
+            const triggerBtn = document.getElementById('word-star-level-btn');
+            if (panel) panel.remove();
+            triggerBtn?.setAttribute('aria-expanded', 'false');
+        }
+
+        function handleDocumentClickForWordStarLevel(event) {
+            const target = event.target;
+            if (target?.closest?.('#word-star-meter') || target?.closest?.('.word-star-level-panel')) return;
+            closeWordStarLevelPanel();
+        }
+
+        function handleWordStarLevelKeydown(event) {
+            if (event.key === 'Escape') {
+                closeWordStarLevelPanel();
             }
         }
 
@@ -2210,46 +2690,132 @@
         function initStudySettings() {
             const wordCountSlider = document.getElementById('word-count-slider');
             const timeSlider = document.getElementById('time-slider');
+            const wordCountInput = document.getElementById('word-count-input');
+            const timeInput = document.getElementById('time-input');
             const wordCountDisplay = document.getElementById('word-count-display');
             const timeDisplay = document.getElementById('time-display');
             const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
             const settingsPanel = document.getElementById('settings-panel');
             const resetSettingsBtn = document.getElementById('reset-settings-btn');
-            
+            const wordPresetButtons = Array.from(document.querySelectorAll('[data-word-count]'));
+            const timePresetButtons = Array.from(document.querySelectorAll('[data-study-time]'));
+            const wordCustomButton = document.getElementById('word-count-custom-btn');
+            const timeCustomButton = document.getElementById('time-custom-btn');
+            const wordCustomControl = document.getElementById('word-count-custom-control');
+            const timeCustomControl = document.getElementById('time-custom-control');
+            let wordCustomMode = false;
+            let timeCustomMode = false;
+
+            function clampValue(value, min, max, fallback) {
+                const parsed = Number.parseInt(value, 10);
+                if (!Number.isFinite(parsed)) return fallback;
+                return Math.min(max, Math.max(min, parsed));
+            }
+
+            function syncChoiceStates() {
+                const wordCount = Number.parseInt(wordCountSlider.value, 10);
+                const timeMinutes = Number.parseInt(timeSlider.value, 10);
+                wordPresetButtons.forEach(button => {
+                    const isActive = !wordCustomMode && Number.parseInt(button.dataset.wordCount, 10) === wordCount;
+                    button.classList.toggle('active', isActive);
+                    button.setAttribute('aria-pressed', String(isActive));
+                });
+                timePresetButtons.forEach(button => {
+                    const isActive = !timeCustomMode && Number.parseInt(button.dataset.studyTime, 10) === timeMinutes;
+                    button.classList.toggle('active', isActive);
+                    button.setAttribute('aria-pressed', String(isActive));
+                });
+                wordCustomButton.classList.toggle('active', wordCustomMode);
+                timeCustomButton.classList.toggle('active', timeCustomMode);
+                wordCustomButton.setAttribute('aria-pressed', String(wordCustomMode));
+                timeCustomButton.setAttribute('aria-pressed', String(timeCustomMode));
+                wordCustomButton.textContent = wordCustomMode ? `自定义 · ${wordCount} 个` : '自定义';
+                timeCustomButton.textContent = timeCustomMode ? `自定义 · ${timeMinutes} 分钟` : '自定义';
+                wordCustomControl.classList.toggle('hidden', !wordCustomMode);
+                timeCustomControl.classList.toggle('hidden', !timeCustomMode);
+            }
+
             // 更新显示值
             function updateSettingsDisplay() {
                 const wordCount = parseInt(wordCountSlider.value);
                 const timeMinutes = parseInt(timeSlider.value);
                 
-                wordCountDisplay.textContent = wordCount;
-                timeDisplay.textContent = timeMinutes + '分钟';
+                wordCountInput.value = wordCount;
+                timeInput.value = timeMinutes;
+                wordCountDisplay.textContent = `${wordCount} 个`;
+                timeDisplay.textContent = `${timeMinutes} 分钟`;
                 
                 // 更新全局变量
                 requestedWordCount = wordCount;
                 timeLeft = timeMinutes * 60;
                 initialTime = timeMinutes * 60;
+                syncChoiceStates();
                 
                 console.log(`学习设置更新: ${wordCount}个单词, ${timeMinutes}分钟`);
             }
             
-            // 绑定滑块事件
-            wordCountSlider.addEventListener('input', updateSettingsDisplay);
-            timeSlider.addEventListener('input', updateSettingsDisplay);
+            wordPresetButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    wordCustomMode = false;
+                    wordCountSlider.value = button.dataset.wordCount;
+                    updateSettingsDisplay();
+                });
+            });
+            timePresetButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    timeCustomMode = false;
+                    timeSlider.value = button.dataset.studyTime;
+                    updateSettingsDisplay();
+                });
+            });
+
+            wordCustomButton.addEventListener('click', () => {
+                wordCustomMode = true;
+                syncChoiceStates();
+                wordCountInput.focus();
+            });
+            timeCustomButton.addEventListener('click', () => {
+                timeCustomMode = true;
+                syncChoiceStates();
+                timeInput.focus();
+            });
+
+            // 自定义值支持滑杆和数字直接输入，两者始终保持同步。
+            wordCountSlider.addEventListener('input', () => {
+                wordCustomMode = true;
+                updateSettingsDisplay();
+            });
+            timeSlider.addEventListener('input', () => {
+                timeCustomMode = true;
+                updateSettingsDisplay();
+            });
+            wordCountInput.addEventListener('change', () => {
+                wordCustomMode = true;
+                wordCountSlider.value = clampValue(wordCountInput.value, 5, 50, Number.parseInt(wordCountSlider.value, 10));
+                updateSettingsDisplay();
+            });
+            timeInput.addEventListener('change', () => {
+                timeCustomMode = true;
+                timeSlider.value = clampValue(timeInput.value, 3, 30, Number.parseInt(timeSlider.value, 10));
+                updateSettingsDisplay();
+            });
             
             // 展开/收起设置面板
             toggleSettingsBtn.addEventListener('click', function() {
                 const isHidden = settingsPanel.classList.contains('hidden');
                 if (isHidden) {
                     settingsPanel.classList.remove('hidden');
-                    this.innerHTML = '<i class="fa fa-cog mr-1"></i>收起';
+                    this.innerHTML = '<i class="fa fa-cog mr-1"></i>收起设置';
                 } else {
                     settingsPanel.classList.add('hidden');
-                    this.innerHTML = '<i class="fa fa-cog mr-1"></i>展开';
+                    this.innerHTML = '<i class="fa fa-cog mr-1"></i>展开设置';
                 }
             });
             
             // 重置设置
             resetSettingsBtn.addEventListener('click', function() {
+                wordCustomMode = false;
+                timeCustomMode = false;
                 wordCountSlider.value = 10;
                 timeSlider.value = 5;
                 updateSettingsDisplay();
@@ -2285,15 +2851,6 @@
             
             const gradeInfo = gradeMap[currentGrade];
             currentGradeText = gradeInfo.text;
-            
-            // 更新各界面年级徽章
-            const gradeNumber = currentGrade.replace('grade', '');
-            previewGradeBadge.className = `grade-badge mr-2 ${gradeInfo.badgeClass}`;
-            gameGradeBadge.className = `grade-badge mr-2 ${gradeInfo.badgeClass}`;
-            endGradeBadge.className = `grade-badge mr-2 ${gradeInfo.badgeClass}`;
-            previewGradeBadge.textContent = gradeNumber;
-            gameGradeBadge.textContent = gradeNumber;
-            endGradeBadge.textContent = gradeNumber;
             
             // 更新当前选择显示
             updateCurrentSelectionDisplay();
@@ -2412,7 +2969,7 @@
             }));
 
             // 更新UI
-            document.getElementById('score').textContent = `得分: ${score}`;
+            updateWordStarHud();
             updateTimerDisplay();
             document.getElementById('feedback').classList.add('hidden');
             document.getElementById('hint').classList.add('hidden');
@@ -2486,6 +3043,7 @@
         // 显示当前预览单词
         function showCurrentPreviewWord() {
             clearPreviewAutoAdvance();
+            clearPreviewAutoPronounce();
             if (currentPreviewIndex < 0 || currentPreviewIndex >= gameWords.length) {
                 console.log('索引超出范围:', currentPreviewIndex, '单词总数:', gameWords.length);
                 return;
@@ -2498,6 +3056,9 @@
             
             previewMissingImage.classList.toggle('hidden', imageCandidates.length > 0);
             previewWordImage.classList.toggle('hidden', imageCandidates.length === 0);
+            previewWordImage.loading = 'eager';
+            previewWordImage.decoding = 'async';
+            previewWordImage.fetchPriority = 'high';
             if (imageCandidates.length > 0) {
                 loadImageWithFallback(previewWordImage, imageCandidates, () => {
                     console.log('图片加载失败，显示缺少图片:', word.english, '候选链接:', imageCandidates);
@@ -2518,53 +3079,89 @@
             previewReadTip.textContent = getReadTipForWord(word);
             previewExample.textContent = getExampleForWord(word);
             previewExampleCn.textContent = getExampleCnForWord(word);
-            previewSyllableSplit.textContent = getSyllableSplitForWord(word);
-            previewChunkCard.classList.toggle('hidden', !shouldShowChunkTipForWord(word));
-            previewMemoryTip.textContent = getMemoryTipForWord(word);
-            previewSpellingTip.textContent = getSpellingSecretForWord(word);
+            const mastery = loadMasteryRecords()[getWordKey(word)] || {};
+            const adaptiveCards = window.MemoryCore.getAdaptiveCards(word, mastery);
+            const chunkCard = adaptiveCards.find(card => ['compound', 'syllable', 'phrase'].includes(card.type));
+            const memoryCard = adaptiveCards.find(card => card.type === 'scene');
+            const spellingCard = adaptiveCards.find(card => card.type === 'spelling');
+            previewSyllableSplit.textContent = chunkCard ? chunkCard.text : '';
+            previewChunkTitle.textContent = chunkCard ? `${chunkCard.icon} ${chunkCard.title}` : '词块记忆';
+            previewChunkCard.classList.toggle('hidden', !chunkCard);
+            previewMemoryTip.textContent = memoryCard ? memoryCard.text : '';
+            previewMemoryCard.classList.toggle('hidden', !memoryCard);
+            previewSpellingTip.textContent = spellingCard ? spellingCard.text : '';
+            previewSpellingCard.classList.toggle('hidden', !spellingCard);
+            previewHelperEmpty.classList.toggle('hidden', adaptiveCards.length > 0);
+            const visibleMemoryCardCount = [
+                previewChunkCard,
+                previewMemoryCard,
+                previewSpellingCard
+            ].filter(card => !card.classList.contains('hidden')).length;
+            const visibleHelperCardCount = 2 + (visibleMemoryCardCount || 1);
+            previewHelperStep.dataset.helperCardCount = String(visibleHelperCardCount);
             previewWordCount.textContent = `${currentPreviewIndex + 1}/${gameWords.length}`;
             setPreviewStep('study');
-            
-            // 自动朗读当前单词
-            setTimeout(() => {
-                pronounceWord(word.english, getAudioUrlForWord(word));
-            }, 300); // 延迟300ms朗读，让页面切换更自然
-            
+            schedulePreviewWordPronunciation(word, currentPreviewIndex);
+            preloadWordImages(gameWords, currentPreviewIndex + 1);
+
             console.log('显示单词:', word.english, '索引:', currentPreviewIndex, '图片链接:', imageUrl);
         }
 
-        function setPreviewStep(step) {
-            currentPreviewStep = step;
-            singleWordCard.dataset.previewStep = step;
+        function updatePreviewStage(visualStep) {
             const stageOrder = ['study', 'helper', 'quiz'];
             previewStageItems.forEach((item) => {
                 const itemStep = item.dataset.previewStage;
-                item.classList.toggle('active', itemStep === step);
-                item.classList.toggle('complete', stageOrder.indexOf(itemStep) < stageOrder.indexOf(step));
-                if (itemStep === step) {
+                item.classList.toggle('active', itemStep === visualStep);
+                item.classList.toggle('complete', stageOrder.indexOf(itemStep) < stageOrder.indexOf(visualStep));
+                if (itemStep === visualStep) {
                     item.setAttribute('aria-current', 'step');
                 } else {
                     item.removeAttribute('aria-current');
                 }
             });
+        }
+
+        function completePreviewStageTrack() {
+            previewStageItems.forEach((item) => {
+                item.classList.remove('active');
+                item.classList.add('complete');
+                item.removeAttribute('aria-current');
+            });
+        }
+
+        function setPreviewStep(step) {
+            currentPreviewStep = step;
+            singleWordCard.dataset.previewStep = step;
+            delete previewMainActionBtn.dataset.action;
+            updatePreviewStage(step);
             previewStudyStep.classList.toggle('hidden', step !== 'study');
             previewHelperStep.classList.toggle('hidden', step !== 'helper');
             previewQuizStep.classList.toggle('hidden', step !== 'quiz');
             previewQuizFeedback.classList.add('hidden');
 
             if (step === 'study') {
-                previewStepHint.textContent = '先看图、听一听，再跟着小帮手记一记。';
-                previewMainActionBtn.textContent = '查看记忆小帮手';
-            } else if (step === 'helper') {
-                previewStepHint.textContent = '先听一听，再跟着说，最后自己试试看。';
-                previewMainActionBtn.textContent = '开始主动回忆';
-            } else {
-                previewStepHint.textContent = '完成当前单词的小测试后，再进入下一张。';
-                previewMainActionBtn.classList.add('hidden');
-            }
-
-            if (step !== 'quiz') {
+                previewStepHint.textContent = '第 1/6 步：看图认识单词和意思。';
+                previewMainActionBtn.textContent = '下一步：听读与记忆';
                 previewMainActionBtn.classList.remove('hidden');
+                previewHelpActionBtn.classList.add('hidden');
+            } else if (step === 'helper') {
+                previewStepHint.textContent = '第 2/6 步：听单词、跟读句子，需要时再看记忆提示。';
+                previewMainActionBtn.textContent = '开始挑战：看图选英文';
+                previewMainActionBtn.classList.remove('hidden');
+                previewHelpActionBtn.classList.add('hidden');
+                const word = gameWords[currentPreviewIndex];
+                if (word) {
+                    const helperWordIndex = currentPreviewIndex;
+                    setTimeout(() => {
+                        if (currentPreviewStep === 'helper' && currentPreviewIndex === helperWordIndex) {
+                            pronounceWord(word.english, getAudioUrlForWord(word), previewWordAudioBtn, '🔊 听单词');
+                        }
+                    }, 180);
+                }
+            } else {
+                previewStepHint.textContent = '第 3—6/6 步：选择题点选即作答，最后完成一次拼写。';
+                previewMainActionBtn.classList.add('hidden');
+                previewHelpActionBtn.classList.add('hidden');
             }
 
             const activeStep = step === 'study'
@@ -2575,6 +3172,11 @@
         }
 
         function handlePreviewMainAction() {
+            if (previewMainActionBtn.dataset.action === 'reading') {
+                goToReadingScreen(getCurrentLearningRoundWords());
+                return;
+            }
+
             if (currentPreviewStep === 'study') {
                 setPreviewStep('helper');
                 return;
@@ -2590,25 +3192,31 @@
             previewQuizQuestions = buildPreviewQuizQuestions(word);
             previewQuizIndex = 0;
             previewQuizAnsweredCount = 0;
+            previewQuizSubmitting = false;
+            previewRewardStreak = 0;
+            previewRewardStars = 0;
             setPreviewStep('quiz');
             renderPreviewQuizQuestion();
         }
 
         function buildPreviewQuizQuestions(word) {
-            const preferredTypes = getPreviewQuestionTypesForWord(word)
-                .sort((a, b) => {
-                    const order = ['image_to_english', 'audio_to_english', 'chinese_to_english', 'english_to_chinese', 'cloze', 'phrase_order', 'spelling'];
-                    return order.indexOf(a) - order.indexOf(b);
-                });
-            return preferredTypes
-                .map(type => createQuestionByType(word, type));
+            const coreTypes = ['image_to_english', 'audio_to_english', 'english_to_chinese', 'spelling'];
+            return coreTypes.map(type => createQuestionByType(word, type));
+        }
+
+        function getCurrentLearningRoundWords() {
+            const completedWords = gameWords.filter((word, index) => word && isPreviewWordLearned(index));
+            return completedWords.length >= 2 ? completedWords : gameWords.filter(Boolean);
         }
 
         function renderPreviewQuizQuestion() {
+            clearPreviewAutoAdvance();
             const word = gameWords[currentPreviewIndex];
             previewQuizQuestion = previewQuizQuestions[previewQuizIndex];
             previewQuizStartedAt = Date.now();
-            previewQuizTitle.textContent = `${previewQuizQuestion.title} ${previewQuizIndex + 1}/${previewQuizQuestions.length}`;
+            previewQuizSubmitting = false;
+            const pageNumber = previewQuizIndex + 3;
+            previewQuizTitle.textContent = `${previewQuizQuestion.title} ${pageNumber}/6`;
             previewQuizPrompt.textContent = previewQuizQuestion.prompt;
             previewQuizHelper.textContent = previewQuizQuestion.helper;
             previewQuizOptions.innerHTML = '';
@@ -2619,6 +3227,8 @@
             previewQuizOptions.classList.toggle('hidden', isSpelling);
             previewQuizSpelling.classList.toggle('hidden', !isSpelling);
             previewQuizSubmitBtn.classList.toggle('hidden', !isSpelling);
+            previewQuizSubmitBtn.disabled = true;
+            previewQuizSubmitBtn.textContent = '提交答案';
 
             if (previewQuizQuestion.type === 'image_to_english') {
                 const imageCandidates = getWordImageCandidates(word);
@@ -2627,6 +3237,9 @@
                     : `<div class="preview-missing-image inline"><i class="fa fa-image"></i><strong>缺少图片</strong><span>${escapeHtml(word.image_file_name || '请填写 image_url')}</span></div>`;
                 const quizImage = previewQuizPrompt.querySelector('img');
                 if (quizImage) {
+                    quizImage.loading = 'eager';
+                    quizImage.decoding = 'async';
+                    quizImage.fetchPriority = 'high';
                     loadImageWithFallback(quizImage, imageCandidates, () => {
                         previewQuizPrompt.innerHTML = `<div class="preview-missing-image inline"><i class="fa fa-image"></i><strong>缺少图片</strong><span>${escapeHtml(word.image_file_name || '请填写 image_url')}</span></div>`;
                     });
@@ -2666,6 +3279,13 @@
             });
         }
 
+        function submitPreviewCurrentAnswer() {
+            if (previewQuizSubmitting || !previewQuizQuestion) return;
+            if (previewQuizQuestion.type === 'spelling' || previewQuizQuestion.type === 'phrase_order') {
+                submitPreviewSpellingAnswer();
+            }
+        }
+
         function buildPreviewSpellingInput(word, questionType = 'spelling') {
             const spellingMode = questionType === 'phrase_order' ? 'phrase_order' : (word.spelling_test_mode || word.spelling_mode || 'partial_blank');
             previewQuizSpelling.dataset.mode = spellingMode;
@@ -2682,7 +3302,10 @@
                 previewQuizTextInput.classList.remove('hidden');
                 previewQuizAnswerSlots.classList.add('hidden');
                 previewQuizLetterBankEl.classList.add('hidden');
-                previewQuizSubmitBtn.disabled = false;
+                previewQuizSubmitBtn.disabled = true;
+                previewQuizTextInput.oninput = () => {
+                    previewQuizSubmitBtn.disabled = previewQuizTextInput.value.trim().length === 0;
+                };
                 setTimeout(() => previewQuizTextInput.focus(), 50);
                 return;
             }
@@ -2694,7 +3317,10 @@
                 previewQuizTextInput.classList.remove('hidden');
                 previewQuizAnswerSlots.classList.add('hidden');
                 previewQuizLetterBankEl.classList.add('hidden');
-                previewQuizSubmitBtn.disabled = false;
+                previewQuizSubmitBtn.disabled = true;
+                previewQuizTextInput.oninput = () => {
+                    previewQuizSubmitBtn.disabled = previewQuizTextInput.value.trim().length === 0;
+                };
                 setTimeout(() => previewQuizTextInput.focus(), 50);
                 return;
             }
@@ -2776,6 +3402,9 @@
         }
 
         function finishPreviewQuizAnswer(selectedAnswer, isCorrect) {
+            if (previewQuizSubmitting) return;
+            previewQuizSubmitting = true;
+            previewQuizSubmitBtn.disabled = true;
             const word = gameWords[currentPreviewIndex];
             const responseTime = previewQuizStartedAt ? Date.now() - previewQuizStartedAt : 0;
             recordPreviewQuizAnswer(word, selectedAnswer, isCorrect, responseTime);
@@ -2790,21 +3419,39 @@
             });
 
             const isSpellingLike = previewQuizQuestion.type === 'spelling' || previewQuizQuestion.type === 'phrase_order';
-            previewQuizFeedback.textContent = isCorrect
-                ? '答对啦！'
-                : (isSpellingLike ? `差一点，${getSpellingSecretForWord(word)}` : `再记一下，正确答案是 ${previewQuizQuestion.answer}`);
+            const spellingTip = getSpellingSecretForWord(word);
+            if (isCorrect) {
+                previewRewardStreak += 1;
+                previewRewardStars += 1;
+                awardWordStars(1, '学新词', word?.english || '');
+                const praises = ['太棒了！', '答对啦！', '很准确！', '记得真牢！'];
+                const praise = praises[(previewQuizIndex + previewQuizAnsweredCount) % praises.length];
+                const streakText = previewRewardStreak >= 2 ? ` · 连对 ${previewRewardStreak} 题` : '';
+                previewQuizFeedback.innerHTML = `<strong>⭐ ${praise}</strong><span>+1 记忆星${streakText}，现在有 ${previewRewardStars} 颗。</span>`;
+            } else {
+                previewRewardStreak = 0;
+                resetWordStarStreak();
+                const correction = isSpellingLike && spellingTip
+                    ? escapeHtml(spellingTip)
+                    : `正确答案是 <b>${escapeHtml(previewQuizQuestion.answer)}</b>`;
+                previewQuizFeedback.innerHTML = `<strong>💪 找到一个薄弱点</strong><span>${correction}。它会进入薄弱复习，再遇到就会更稳。</span>`;
+            }
             previewQuizFeedback.className = `preview-quiz-feedback ${isCorrect ? 'correct' : 'wrong'}`;
             previewQuizFeedback.classList.remove('hidden');
             previewQuizAnsweredCount++;
 
-            setTimeout(() => {
+            const advanceDelay = isCorrect
+                ? (isSpellingLike ? PREVIEW_SPELLING_PRAISE_HOLD_MS : PREVIEW_PRAISE_HOLD_MS)
+                : PREVIEW_WRONG_FEEDBACK_HOLD_MS;
+            previewAutoAdvanceTimer = setTimeout(() => {
+                previewAutoAdvanceTimer = null;
                 previewQuizIndex++;
                 if (previewQuizIndex < previewQuizQuestions.length) {
                     renderPreviewQuizQuestion();
                     return;
                 }
                 finishPreviewQuizForWord();
-            }, 950);
+            }, advanceDelay);
         }
 
         function recordPreviewQuizAnswer(word, selectedAnswer, isCorrect, responseTime) {
@@ -2891,16 +3538,22 @@
             }
 
             previewQuizTitle.textContent = '这张卡学完啦';
+            completePreviewStageTrack();
+            currentPreviewStep = 'complete';
+            singleWordCard.dataset.previewStep = 'complete';
             const needsWork = aggregateErrorTypes.length > 0 || !allCorrect;
             const nextReviewAt = updatedEntry ? (updatedEntry.next_review_at || updatedEntry.nextReviewAt) : '';
             const nextReviewText = nextReviewAt ? formatReviewTime(nextReviewAt) : '稍后';
-            const strengtheningTip = getSpellingSecretForWord(word);
+            const strengtheningTip = getSpellingSecretForWord(word) || getMemoryTipForWord(word);
+            const completedRoundWords = getCurrentLearningRoundWords();
+            const canReadStory = completedRoundWords.length >= 2
+                && gameWords.every((item, index) => !item || isPreviewWordLearned(index));
             previewQuizPrompt.innerHTML = `
                 <div class="preview-complete-card">
                     <strong>${escapeHtml(word.english)} = ${escapeHtml(word.chinese)}</strong>
                     <span>${needsWork ? '这个词还不太熟。' : '你已经完成听音、记忆和小测试。'}</span>
-                    <span>${needsWork ? `重点记住：${escapeHtml(strengtheningTip)}` : `${nextReviewText}我们会再复习一次。`}</span>
-                    <span>下次复习：${escapeHtml(nextReviewText)}</span>
+                    <span>${needsWork && strengtheningTip ? `重点记住：${escapeHtml(strengtheningTip)}` : `${nextReviewText}我们会再复习一次。`}</span>
+                    <span>${canReadStory ? '这一轮词学完了，可以读一篇只含刚学词的小故事。' : `下次复习：${escapeHtml(nextReviewText)}`}</span>
                 </div>
             `;
             previewQuizHelper.textContent = '';
@@ -2909,7 +3562,14 @@
             previewQuizSpelling.classList.add('hidden');
             previewQuizSubmitBtn.classList.add('hidden');
             previewQuizFeedback.classList.add('hidden');
-            previewMainActionBtn.classList.add('hidden');
+            if (canReadStory) {
+                previewMainActionBtn.textContent = '读刚学单词小故事';
+                previewMainActionBtn.dataset.action = 'reading';
+                previewMainActionBtn.classList.remove('hidden');
+            } else {
+                previewMainActionBtn.classList.add('hidden');
+            }
+            previewHelpActionBtn.classList.add('hidden');
             updatePreviewButtons();
         }
 
@@ -2918,6 +3578,23 @@
                 clearTimeout(previewAutoAdvanceTimer);
                 previewAutoAdvanceTimer = null;
             }
+        }
+
+        function clearPreviewAutoPronounce() {
+            if (previewAutoPronounceTimer) {
+                clearTimeout(previewAutoPronounceTimer);
+                previewAutoPronounceTimer = null;
+            }
+        }
+
+        function schedulePreviewWordPronunciation(word, wordIndex) {
+            clearPreviewAutoPronounce();
+            previewAutoPronounceTimer = setTimeout(() => {
+                previewAutoPronounceTimer = null;
+                if (currentPreviewStep === 'study' && currentPreviewIndex === wordIndex) {
+                    pronounceWord(word.english, getAudioUrlForWord(word));
+                }
+            }, 240);
         }
 
         function schedulePreviewAutoAdvance() {
@@ -3085,6 +3762,7 @@
             
             const currentWord = gameWords[currentWordIndex];
             activeQuestion = createActiveQuestion(currentWord, currentWordIndex);
+            gameScreen.dataset.questionType = activeQuestion.type;
             questionStartedAt = Date.now();
             questionTitleEl.textContent = activeQuestion.title;
             questionHelperEl.textContent = activeQuestion.helper;
@@ -3094,6 +3772,7 @@
             document.getElementById('hint').classList.add('hidden');
             renderActiveQuestionInput(currentWord);
             updateMascotMessage('ready');
+            preloadWordImages(gameWords, currentWordIndex + 1);
 
             if (activeQuestion.type === 'audio_to_english' || activeQuestion.type === 'spelling') {
                 setTimeout(() => {
@@ -3125,7 +3804,7 @@
             document.getElementById('submit-btn').classList.toggle('hidden', !isSpellingQuestion());
 
             if (isSpellingQuestion()) {
-                letterGameInstructionEl.textContent = '点击或拖动下方字母卡片，把它们按顺序拼成正确单词';
+                letterGameInstructionEl.textContent = '拖到任意空格，或先点空格再选字母。';
                 buildLetterBank(currentWord);
                 return;
             }
@@ -3176,6 +3855,7 @@
                 }
 
                 launchCelebration();
+                awardWordStars(Math.max(1, 2 - usedHints), '做挑战', currentWord.english);
                 updateMascotMessage('correct');
                 
                 // 添加到已完成列表
@@ -3187,7 +3867,7 @@
                     usedHints = 0;
                     updateProgressDisplay();
                     showCurrentWord();
-                }, 1200);
+                }, GAME_PRAISE_HOLD_MS);
             } else {
                 // 答案错误
                 wrongCount++;
@@ -3202,6 +3882,7 @@
                     firstWrongCount++; // 首次答错计数增加
                 }
                 updateMascotMessage('wrong');
+                resetWordStarStreak();
                 
                 // 延迟清空输入框
                 setTimeout(() => {
@@ -3210,7 +3891,7 @@
             }
             
             // 更新分数
-            document.getElementById('score').textContent = `得分: ${score}`;
+            updateWordStarHud();
             renderRewardStars();
             feedbackEl.classList.remove('hidden');
         }
@@ -3253,6 +3934,7 @@
                 feedbackEl.textContent = `正确！${currentWord.english} 的意思是 ${currentWord.chinese}`;
                 feedbackEl.className = 'p-4 rounded-lg text-center text-lg bg-green-50 text-green-700 border border-green-200';
                 launchCelebration();
+                awardWordStars(responseTimeMs > SLOW_RECALL_MS ? 1 : 2, '做挑战', currentWord.english);
                 updateMascotMessage('correct');
                 addToCompletedList(currentWord, true);
             } else {
@@ -3264,10 +3946,11 @@
                 feedbackEl.textContent = spellingHint;
                 feedbackEl.className = 'p-4 rounded-lg text-center text-lg bg-red-50 text-red-700 border border-red-200';
                 updateMascotMessage('wrong');
+                resetWordStarStreak();
                 addToCompletedList(currentWord, false);
             }
 
-            document.getElementById('score').textContent = `得分: ${score}`;
+            updateWordStarHud();
             renderRewardStars();
             feedbackEl.classList.remove('hidden');
 
@@ -3276,11 +3959,14 @@
                 usedHints = 0;
                 updateProgressDisplay();
                 showCurrentWord();
-            }, 1300);
+            }, isCorrect ? GAME_PRAISE_HOLD_MS : GAME_WRONG_FEEDBACK_HOLD_MS);
         }
 
         // 添加到已完成列表
         function addToCompletedList(word, isCorrect) {
+            // 新版挑战页以当前题为核心，不再在底部堆叠已完成单词。
+            // 否则会出现“第一个词一直露在底部”的视觉干扰。
+            return;
             const wordsListEl = document.getElementById('words-list');
             const wordEl = document.createElement('div');
             wordEl.className = `rounded-lg p-2 text-center text-sm ${isCorrect ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;
@@ -3378,6 +4064,10 @@
         function endGame() {
             clearInterval(timerInterval);
             gameStarted = false;
+            const timeProgressEl = document.getElementById('time-progress');
+            if (timeProgressEl) {
+                timeProgressEl.style.width = '100%';
+            }
             
             // 保存学习记录
             saveStudyRecord();
@@ -3547,7 +4237,10 @@
 
             const todayRecords = records.filter(record => isSameLocalDate(record.finishTime || record.startTime));
             if (todayRecords.length === 0) {
-                parentDailyReportEl.innerHTML = '<div class="text-gray-500">今日还没有学习记录。</div>';
+                parentDailyReportEl.innerHTML = `
+                    <div class="daily-report-title">今日建议</div>
+                    <p class="daily-report-action">开始一轮卡片学习，完成后这里会告诉你下一步该复习什么。</p>
+                `;
                 return;
             }
 
@@ -3582,14 +4275,16 @@
                 : '明天可继续新词学习，并用 3 分钟复盘今天的拼写题。';
 
             parentDailyReportEl.innerHTML = `
+                <div class="daily-report-heading">
+                    <span>今日建议</span>
+                    <p>${escapeHtml(tomorrowText)}</p>
+                </div>
                 <div class="parent-daily-grid">
                     <div><span>今日学习</span><strong>${learnedCount}</strong></div>
                     <div><span>复习数量</span><strong>${reviewCount}</strong></div>
                     <div><span>正确率</span><strong>${accuracy}%</strong></div>
                 </div>
-                <p><strong>错词：</strong>${escapeHtml(wrongText)}</p>
-                <p><strong>主要问题：</strong>${escapeHtml(problemText)}</p>
-                <p><strong>明日建议：</strong>${escapeHtml(tomorrowText)}</p>
+                <div class="daily-report-note"><strong>需要留意：</strong>${escapeHtml(problemText)}${todayWrongWords.length ? `；错词：${escapeHtml(wrongText)}` : ''}</div>
             `;
         }
 
@@ -3640,6 +4335,14 @@
                     memory_hook: getMemoryTipForWord(word),
                     letter_image_story: word.letter_image_story || getSpellingTipForWord(word),
                     memoryTip: getMemoryTipForWord(word),
+                    category: word.category || word.topic || '',
+                    topic: word.topic || word.category || '',
+                    partOfSpeech: word.partOfSpeech || word.part_of_speech || '',
+                    memory_strategy: word.memory_strategy || word.memoryStrategy || '',
+                    spelling_pattern: word.spelling_pattern || word.spellingPattern || '',
+                    chunk_tip: word.chunk_tip || word.chunkTip || '',
+                    show_chunk_tip: word.show_chunk_tip ?? word.showChunkTip ?? false,
+                    test_flow: word.test_flow || word.testFlow || word.test_methods || '',
                     mastery_level: word.mastery_level || word.intervalIndex || 0
                 });
                 }
@@ -3673,7 +4376,7 @@
 
         function startTodayReview() {
             const reviewWords = getTodayReviewWords(loadStudyRecords(), requestedWordCount);
-            if (prepareReviewGame(reviewWords, '今日错词复习')) {
+            if (prepareReviewGame(reviewWords, '今日复习队列')) {
                 startGame();
             }
         }
@@ -3694,18 +4397,22 @@
                 return;
             }
 
+            const reviewBar = document.getElementById('game-review-bar');
+
             const reviewWords = getTodayReviewWords(records, requestedWordCount);
             if (reviewWords.length === 0) {
-                todayReviewSummaryEl.textContent = '暂无到期复习单词。完成一次挑战后，我会按记忆曲线安排复习。';
+                todayReviewSummaryEl.textContent = '';
                 startReviewBtn.disabled = true;
                 startReviewBtn.classList.add('opacity-60', 'cursor-not-allowed');
+                reviewBar?.classList.add('hidden');
                 return;
             }
 
             const previewWords = reviewWords.slice(0, 3).map(word => word.english).join('、');
-            todayReviewSummaryEl.textContent = `按记忆曲线，今天建议复习 ${reviewWords.length} 个词：${previewWords}${reviewWords.length > 3 ? '…' : ''}`;
+            todayReviewSummaryEl.textContent = `今日可复习 ${reviewWords.length} 个词：${previewWords}${reviewWords.length > 3 ? '…' : ''}`;
             startReviewBtn.disabled = false;
             startReviewBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+            reviewBar?.classList.remove('hidden');
         }
 
         function renderResultReviewAdvice() {
@@ -3717,9 +4424,25 @@
             resultReviewWordsEl.innerHTML = '';
 
             if (wrongWords.length === 0) {
-                resultReviewSummaryEl.textContent = '本轮没有首次答错的单词，可以去新单词游戏继续扩展词库。';
+                const queueItems = Object.values(loadReviewQueue())
+                    .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt))
+                    .slice(0, 4);
+                resultReviewSummaryEl.textContent = queueItems.length
+                    ? '本轮没有明显错词，系统已经把这些词放进间隔复习队列。'
+                    : '本轮没有明显错词，可以继续学新词，或读刚学单词小故事。';
+                queueItems.forEach(item => {
+                    const tag = document.createElement('span');
+                    tag.className = 'result-review-tag';
+                    const dueDate = item.dueAt ? new Date(item.dueAt) : null;
+                    const dueText = dueDate && !Number.isNaN(dueDate.getTime())
+                        ? `${dueDate.getMonth() + 1}/${dueDate.getDate()}`
+                        : '待定';
+                    tag.textContent = `${item.english} · ${dueText}`;
+                    resultReviewWordsEl.appendChild(tag);
+                });
                 reviewWrongBtn.disabled = true;
                 reviewWrongBtn.classList.add('opacity-60', 'cursor-not-allowed');
+                reviewWrongBtn.classList.add('hidden');
                 return;
             }
 
@@ -3731,16 +4454,16 @@
                 resultReviewWordsEl.appendChild(tag);
             });
             reviewWrongBtn.disabled = false;
-            reviewWrongBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+            reviewWrongBtn.classList.remove('opacity-60', 'cursor-not-allowed', 'hidden');
         }
 
         function resetAnalysisData() {
             totalStudiesEl.textContent = '0';
             totalWordsCountEl.textContent = '0';
             avgAccuracyEl.textContent = '0%';
-            maxAccuracyEl.textContent = '0%';
+            if (maxAccuracyEl) maxAccuracyEl.textContent = '0%';
             weakWordsCountEl.textContent = '0';
-            firstWrongWordsCountEl.textContent = '0';
+            if (firstWrongWordsCountEl) firstWrongWordsCountEl.textContent = '0';
             recentRecordsEl.innerHTML = '';
             noRecordsEl.classList.remove('hidden');
             recentRecordsEl.appendChild(noRecordsEl);
@@ -3853,9 +4576,9 @@
             totalStudiesEl.textContent = totalStudies;
             totalWordsCountEl.textContent = totalWordsCount;
             avgAccuracyEl.textContent = `${avgAccuracy}%`;
-            maxAccuracyEl.textContent = `${Math.max(...records.map(record => record.accuracy))}%`;
+            if (maxAccuracyEl) maxAccuracyEl.textContent = `${Math.max(...records.map(record => record.accuracy))}%`;
             weakWordsCountEl.textContent = wrongWordBook.length;
-            firstWrongWordsCountEl.textContent = firstWrongWordsList.length;
+            if (firstWrongWordsCountEl) firstWrongWordsCountEl.textContent = firstWrongWordsList.length;
             
             // 2. 各年级掌握情况
             const gradeAccuracy = {
@@ -3987,12 +4710,29 @@
                 const english = String(word.english || '').trim();
                 if (!english) return;
                 const escapedWord = english.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const chinese = escapeHtml(word.chinese || '');
+                const safeEnglish = escapeHtml(english);
                 highlighted = highlighted.replace(
                     new RegExp(`\\b(${escapedWord})\\b`, 'gi'),
-                    '<span class="reading-keyword">$1</span>'
+                    `<span class="reading-keyword" role="button" tabindex="0" data-english="${safeEnglish}" data-chinese="${chinese}" aria-label="查看 ${safeEnglish} 的中文">$1</span>`
                 );
             });
             return highlighted;
+        }
+
+        function handleReadingKeywordToggle(event) {
+            const keyword = event.target?.closest?.('.reading-keyword');
+            if (!keyword || !readingStoryEl.contains(keyword)) return;
+            event.preventDefault();
+            const english = keyword.dataset.english || keyword.textContent || '';
+            const chinese = keyword.dataset.chinese || '';
+            const matchedWord = currentReadingStory?.targetWords?.find(word =>
+                normalizeWordForGame(word.english) === normalizeWordForGame(english)
+            );
+            const showingMeaning = keyword.classList.toggle('showing-meaning');
+            keyword.textContent = showingMeaning && chinese ? `${english} · ${chinese}` : english;
+            keyword.setAttribute('aria-pressed', showingMeaning ? 'true' : 'false');
+            pronounceWord(english, getAudioUrlForWord(matchedWord || { english }));
         }
 
         function buildReadingSentences(targetWords) {
@@ -4092,7 +4832,7 @@
 
             const optionsWrap = document.createElement('div');
             optionsWrap.className = 'grid grid-cols-1 sm:grid-cols-3 gap-2';
-            question.options.forEach(option => {
+            shuffleArray([...question.options]).forEach(option => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'reading-option bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-3 py-2 text-sm font-bold';
@@ -4107,6 +4847,8 @@
                     if (option !== question.answer) {
                         button.classList.add('wrong');
                     }
+                    recordStoryAnswer(question.word, option === question.answer, question.type);
+                    markReadingAnswer(question.id, option === question.answer);
                 });
                 optionsWrap.appendChild(button);
             });
@@ -4117,20 +4859,22 @@
         function renderClozeItem(item) {
             const card = document.createElement('div');
             card.className = 'reading-question-card';
+            const sourceSentence = item.sentence || item.text || '';
+            const chineseHint = item.chinese || item.word?.chinese || '';
 
             const sentence = document.createElement('div');
             sentence.className = 'reading-cloze-sentence mb-3';
-            sentence.textContent = item.sentence;
+            sentence.textContent = sourceSentence;
             card.appendChild(sentence);
 
             const hint = document.createElement('div');
             hint.className = 'text-sm text-gray-500 mb-3';
-            hint.textContent = `提示中文：${item.chinese}`;
+            hint.textContent = `提示中文：${chineseHint}`;
             card.appendChild(hint);
 
             const optionsWrap = document.createElement('div');
             optionsWrap.className = 'grid grid-cols-1 sm:grid-cols-3 gap-2';
-            item.options.forEach(option => {
+            shuffleArray([...item.options]).forEach(option => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'reading-option bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-3 py-2 text-sm font-bold';
@@ -4145,7 +4889,9 @@
                     if (option !== item.answer) {
                         button.classList.add('wrong');
                     }
-                    sentence.innerHTML = escapeHtml(item.sentence).replace('____', `<span class="reading-keyword">${escapeHtml(item.answer)}</span>`);
+                    sentence.innerHTML = escapeHtml(sourceSentence).replace('____', `<span class="reading-keyword">${escapeHtml(item.answer)}</span>`);
+                    recordStoryAnswer(item.word, option === item.answer, item.type || 'usage');
+                    markReadingAnswer(item.id || 'cloze', option === item.answer);
                 });
                 optionsWrap.appendChild(button);
             });
@@ -4236,17 +4982,77 @@
             readingSentenceBuilderEl.appendChild(wrap);
         }
 
-        function renderReadingPractice() {
-            const learnedWords = getLearnedWords(Math.max(5, requestedWordCount));
+        function getReadingSourceWords() {
+            const source = readingSourceWords.length > 0
+                ? readingSourceWords
+                : getLearnedWords(Math.max(8, requestedWordCount));
+            const masteryRecords = loadMasteryRecords();
             const uniqueWords = [];
             const seen = new Set();
-            learnedWords.forEach(word => {
+            source.forEach(word => {
                 const key = getWordKey(word);
                 if (!seen.has(key)) {
                     seen.add(key);
-                    uniqueWords.push(word);
+                    uniqueWords.push({ ...word, ...(masteryRecords[key] || {}) });
                 }
             });
+            return uniqueWords;
+        }
+
+        function markReadingAnswer(answerId, isCorrect) {
+            if (readingAnsweredIds.has(answerId)) return;
+            readingAnsweredIds.add(answerId);
+            if (isCorrect) {
+                readingCorrectCount += 1;
+                awardWordStars(1, '读故事', '阅读题');
+            } else {
+                resetWordStarStreak();
+            }
+            const total = (currentReadingStory?.questions?.length || 0) + (currentReadingStory?.cloze ? 1 : 0);
+            readingProgressSummaryEl.textContent = `阅读题：${readingAnsweredIds.size}/${total} · 答对 ${readingCorrectCount}`;
+            readingProgressSummaryEl.classList.toggle('complete', readingAnsweredIds.size === total);
+            if (!readingPerfectCelebrated && total > 0 && readingAnsweredIds.size === total && readingCorrectCount === total) {
+                readingPerfectCelebrated = true;
+                awardWordStars(3, '读故事', '全对奖励');
+                launchReadingPerfectCelebration();
+            }
+        }
+
+        function recordStoryAnswer(word, isCorrect, questionType) {
+            if (!word) return;
+            const masteryRecords = loadMasteryRecords();
+            const key = getWordKey(word);
+            const entry = masteryRecords[key] || createMasteryEntry(word, {
+                grade: currentGrade,
+                gradeText: currentGradeText,
+                difficulty: currentDifficulty,
+                difficultyText: getDifficultyText()
+            });
+            entry.story_attempt_count = (entry.story_attempt_count || 0) + 1;
+            entry.story_correct_count = (entry.story_correct_count || 0) + (isCorrect ? 1 : 0);
+            entry.story_wrong_count = (entry.story_wrong_count || 0) + (isCorrect ? 0 : 1);
+            if (!isCorrect) {
+                const errorType = questionType === 'usage' ? 'usage_error' : 'meaning_error';
+                entry.error_types = Array.from(new Set([...(entry.error_types || []), errorType]));
+                entry.status = 'learning';
+                entry.consecutiveCorrect = 0;
+                entry.intervalIndex = Math.max(0, (entry.intervalIndex || 0) - 1);
+                entry.nextReviewAt = new Date().toISOString();
+                entry.next_review_at = entry.nextReviewAt;
+                entry.mastery_level = entry.intervalIndex;
+            }
+            masteryRecords[key] = entry;
+            saveMasteryRecords(masteryRecords);
+            updateReviewQueueAfterRecord(masteryRecords);
+        }
+
+        function pronounceCurrentStory() {
+            if (!currentReadingStory) return;
+            pronounceWord(currentReadingStory.sentences.join(' '), '', readingListenBtn, '🔊 听完整故事', { mode: 'story' });
+        }
+
+        function renderReadingPractice() {
+            const uniqueWords = getReadingSourceWords();
 
             if (uniqueWords.length < 2) {
                 readingEmptyEl.classList.remove('hidden');
@@ -4254,12 +5060,22 @@
                 return;
             }
 
-            const targetWords = shuffleArray(uniqueWords).slice(0, Math.min(5, uniqueWords.length));
-            const sentences = buildReadingSentences(targetWords);
-            const questions = buildReadingQuestions(targetWords);
+            currentReadingStory = window.StoryCore.createStory(uniqueWords, { limit: 3, offset: readingStoryVariant });
+            if (!currentReadingStory) {
+                readingEmptyEl.classList.remove('hidden');
+                readingContentEl.classList.add('hidden');
+                return;
+            }
+            const targetWords = currentReadingStory.targetWords;
+            readingAnsweredIds = new Set();
+            readingCorrectCount = 0;
+            readingPerfectCelebrated = false;
 
             readingEmptyEl.classList.add('hidden');
             readingContentEl.classList.remove('hidden');
+            readingTitleEl.textContent = currentReadingStory.title;
+            readingProgressSummaryEl.textContent = '阅读题：0/3';
+            readingProgressSummaryEl.classList.remove('complete');
             readingTargetWordsEl.innerHTML = '';
             readingStoryEl.innerHTML = '';
             readingQuestionsListEl.innerHTML = '';
@@ -4267,40 +5083,56 @@
             readingSentenceBuilderEl.innerHTML = '';
 
             targetWords.forEach(word => {
-                const tag = document.createElement('span');
+                const tag = document.createElement('button');
+                tag.type = 'button';
                 tag.className = 'reading-target-word';
-                tag.textContent = `${word.english} / ${word.chinese}`;
+                tag.textContent = word.english;
+                tag.dataset.english = word.english;
+                tag.dataset.chinese = word.chinese;
+                tag.disabled = true;
+                tag.setAttribute('aria-label', `目标词 ${word.english}`);
                 readingTargetWordsEl.appendChild(tag);
             });
 
-            sentences.forEach(sentence => {
+            currentReadingStory.sentences.forEach((storySentence, index) => {
+                const row = document.createElement('div');
+                row.className = 'reading-sentence-row';
+                const listenButton = document.createElement('button');
+                listenButton.type = 'button';
+                listenButton.className = 'reading-sentence-audio';
+                listenButton.setAttribute('aria-label', `听第${index + 1}句`);
+                listenButton.textContent = '🔊';
+                listenButton.addEventListener('click', () => pronounceWord(storySentence, '', listenButton, '🔊', { mode: 'sentence' }));
                 const paragraph = document.createElement('p');
-                paragraph.innerHTML = highlightTargetWords(sentence, targetWords);
-                readingStoryEl.appendChild(paragraph);
+                paragraph.innerHTML = highlightTargetWords(storySentence, targetWords);
+                row.append(listenButton, paragraph);
+                readingStoryEl.appendChild(row);
             });
 
-            questions.forEach(question => {
+            currentReadingStory.questions.forEach(question => {
                 readingQuestionsListEl.appendChild(renderReadingQuestion(question));
             });
-
-            buildClozeItems(targetWords).forEach(item => {
-                readingClozeListEl.appendChild(renderClozeItem(item));
-            });
-            renderSentenceBuilder(targetWords);
+            readingClozeListEl.appendChild(renderClozeItem(currentReadingStory.cloze));
         }
 
         // 18. 页面切换
-        function goToReadingScreen() {
+        function goToReadingScreen(sourceWords = []) {
+            readingSourceWords = Array.isArray(sourceWords) ? sourceWords.filter(Boolean) : [];
+            readingStoryVariant = 0;
             hideAllScreens();
             setPageMode('reading');
             readingScreen.classList.remove('screen-hidden');
+            readingScreen.classList.remove('reading-scrolled');
             renderReadingPractice();
+            scrollToPageTop();
+            syncReadingScrollState();
         }
 
         function goToExcelUploadScreen() {
             hideAllScreens();
             setPageMode('excel');
             excelUploadScreen.classList.remove('screen-hidden');
+            scrollToPageTop();
         }
         
         function goToAnalysisScreen() {
@@ -4308,6 +5140,23 @@
             setPageMode('analysis');
             analysisScreen.classList.remove('screen-hidden');
             loadStudyRecords(); // 刷新数据
+            scrollToPageTop();
+        }
+
+        function scrollToPageTop() {
+            // 页面切换不沿用上一页的滚动位置，始终从标题开始阅读。
+            requestAnimationFrame(() => {
+                window.scrollTo(0, 0);
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+                syncReadingScrollState();
+            });
+        }
+
+        function syncReadingScrollState() {
+            if (!readingScreen) return;
+            const shouldCollapseActions = document.body.classList.contains('mode-reading') && window.scrollY > 32;
+            readingScreen.classList.toggle('reading-scrolled', shouldCollapseActions);
         }
 
         function goToStartScreen() {
@@ -4357,8 +5206,132 @@
             }
         }
 
-        // 19. 单词发音功能
-        function pronounceWord(word, audioUrl = '', buttonEl = null, defaultLabel = '') {
+        // 19. 本地发音功能：优先真实音频；没有音频时使用浏览器 TTS，
+        // 并按“单词 / 短语 / 句子 / 故事”选择更自然的 voice、语速和停顿。
+        function inferSpeechMode(text) {
+            const cleanText = String(text || '').trim();
+            const wordCount = cleanText.split(/\s+/).filter(Boolean).length;
+            if (/[.!?]/.test(cleanText) || wordCount > 3) return 'sentence';
+            if (wordCount > 1) return 'phrase';
+            return 'word';
+        }
+
+        function splitSpeechSegments(text, mode = 'sentence') {
+            const cleanText = String(text || '').replace(/\s+/g, ' ').trim();
+            if (!cleanText) return [];
+            if (mode !== 'story' && cleanText.length <= 120) return [cleanText];
+            const sentenceParts = cleanText.match(/[^.!?]+[.!?]?/g)
+                ?.map(part => part.trim())
+                .filter(Boolean) || [cleanText];
+            return sentenceParts.flatMap(part => {
+                if (part.length <= 120) return [part];
+                return part.split(/,\s+|;\s+/).map(piece => piece.trim()).filter(Boolean);
+            });
+        }
+
+        function scoreEnglishVoice(voice, mode = 'sentence') {
+            const lang = String(voice.lang || '').toLowerCase();
+            const name = String(voice.name || '').toLowerCase();
+            let score = 0;
+
+            if (lang === 'en-us') score += 80;
+            else if (lang.startsWith('en-')) score += 60;
+            else return -1000;
+
+            if (/samantha|ava|allison|susan|victoria|karen|serena|moira/.test(name)) score += 40;
+            if (/google.*english|microsoft.*(jenny|aria|guy|zira|david)|natural|neural|premium/.test(name)) score += 34;
+            if (/female|woman/.test(name)) score += mode === 'sentence' || mode === 'story' ? 10 : 4;
+            if (voice.localService) score += 4;
+            if (/compact|novelty|whisper|bad news|bells|cellos|organ|trinoids|zarvox/.test(name)) score -= 80;
+            if (mode === 'word' && /alex|daniel|guy|david/.test(name)) score += 8;
+
+            return score;
+        }
+
+        function getPreferredEnglishVoice(mode = 'sentence') {
+            if (preferredEnglishVoiceCache[mode]) return preferredEnglishVoiceCache[mode];
+            if (!('speechSynthesis' in window)) return null;
+            const voices = window.speechSynthesis.getVoices() || [];
+            if (!voices.length) return null;
+            const preferredVoice = voices
+                .filter(voice => String(voice.lang || '').toLowerCase().startsWith('en'))
+                .sort((a, b) => scoreEnglishVoice(b, mode) - scoreEnglishVoice(a, mode))[0] || null;
+            preferredEnglishVoiceCache[mode] = preferredVoice;
+            return preferredVoice;
+        }
+
+        function getSpeechTuning(mode = 'sentence') {
+            if (mode === 'word') return { rate: TTS_WORD_RATE, pitch: 1.03, volume: 1 };
+            if (mode === 'phrase') return { rate: TTS_PHRASE_RATE, pitch: 1.02, volume: 1 };
+            if (mode === 'story') return { rate: TTS_STORY_RATE, pitch: 1.0, volume: 1 };
+            return { rate: TTS_SENTENCE_RATE, pitch: 1.0, volume: 1 };
+        }
+
+        function speakWithBrowserTts(text, buttonEl = null, defaultLabel = '', options = {}) {
+            if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+                if (buttonEl) {
+                    buttonEl.disabled = false;
+                    buttonEl.textContent = defaultLabel || buttonEl.dataset.defaultLabel || '🔊 播放';
+                }
+                return;
+            }
+
+            const mode = options.mode || inferSpeechMode(text);
+            const segments = splitSpeechSegments(text, mode);
+            if (!segments.length) return;
+
+            const token = ++speechSequenceToken;
+            const tuning = getSpeechTuning(mode);
+            const voice = getPreferredEnglishVoice(mode);
+            let index = 0;
+
+            const setPlayingState = () => {
+                if (buttonEl) {
+                    buttonEl.disabled = true;
+                    buttonEl.textContent = '正在播放';
+                }
+            };
+            const clearPlayingState = () => {
+                if (token !== speechSequenceToken) return;
+                if (buttonEl) {
+                    buttonEl.disabled = false;
+                    buttonEl.textContent = defaultLabel || buttonEl.dataset.defaultLabel || '🔊 播放';
+                }
+            };
+
+            const speakNext = () => {
+                if (token !== speechSequenceToken) return;
+                const segment = segments[index];
+                if (!segment) {
+                    clearPlayingState();
+                    return;
+                }
+                const utterance = new SpeechSynthesisUtterance(segment);
+                utterance.lang = voice?.lang || 'en-US';
+                utterance.rate = tuning.rate;
+                utterance.pitch = tuning.pitch;
+                utterance.volume = tuning.volume;
+                if (voice) utterance.voice = voice;
+                utterance.onstart = setPlayingState;
+                utterance.onerror = clearPlayingState;
+                utterance.onend = () => {
+                    if (token !== speechSequenceToken) return;
+                    index += 1;
+                    if (index >= segments.length) {
+                        clearPlayingState();
+                        return;
+                    }
+                    window.setTimeout(speakNext, mode === 'story' ? TTS_NATURAL_PAUSE_MS + 120 : TTS_NATURAL_PAUSE_MS);
+                };
+                window.speechSynthesis.speak(utterance);
+            };
+
+            window.speechSynthesis.cancel();
+            setPlayingState();
+            window.setTimeout(speakNext, 40);
+        }
+
+        function pronounceWord(word, audioUrl = '', buttonEl = null, defaultLabel = '', options = {}) {
             const setPlayingState = () => {
                 if (buttonEl) {
                     buttonEl.disabled = true;
@@ -4379,23 +5352,17 @@
                 audio.onerror = clearPlayingState;
                 audio.play().catch(() => {
                     clearPlayingState();
-                    pronounceWord(word, '', buttonEl, defaultLabel);
+                    pronounceWord(word, '', buttonEl, defaultLabel, options);
                 });
                 return;
             }
 
-            const utterance = new SpeechSynthesisUtterance(word);
-            utterance.lang = 'en-US';
-            utterance.onstart = setPlayingState;
-            utterance.onend = clearPlayingState;
-            utterance.onerror = clearPlayingState;
-            speechSynthesis.cancel();
-            speechSynthesis.speak(utterance);
+            speakWithBrowserTts(word, buttonEl, defaultLabel, options);
         }
 
         function pronounceSentenceForWord(word) {
             const sentence = getExampleForWord(word);
-            pronounceWord(sentence, getSentenceAudioUrlForWord(word), previewSentenceAudioBtn, '🔊 听句子');
+            pronounceWord(sentence, getSentenceAudioUrlForWord(word), previewSentenceAudioBtn, '🔊 听句子', { mode: 'sentence' });
         }
 
         // 初始化应用：兼容本地文件、CDN 延迟和脚本缓存命中后的加载顺序。

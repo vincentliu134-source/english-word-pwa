@@ -1,7 +1,7 @@
 {
-  "name": "小学英语单词学习工具",
-  "short_name": "背单词",
-  "description": "适合小学生的卡片式英语单词学习、记忆小帮手、主动回忆和错词复习工具。",
+  "name": "词星探险",
+  "short_name": "词星",
+  "description": "小学英语 · 看图 · 听读 · 回忆：适合小学生的单词学习、主动回忆、错词复习和阅读小故事工具。",
   "lang": "zh-CN",
   "start_url": "./enhanced-word-tool.html",
   "scope": "./",
@@ -12,19 +12,19 @@
   "categories": ["education", "kids", "productivity"],
   "icons": [
     {
-      "src": "assets/icons/icon-180.png",
+      "src": "assets/icons/word-cards-180.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-192.png",
+      "src": "assets/icons/word-cards-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/icon-512.png",
+      "src": "assets/icons/word-cards-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

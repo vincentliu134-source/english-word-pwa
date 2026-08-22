@@ -960,6 +960,1873 @@ body.mode-game #game-screen .active-recall-options,
     }
 }
 
+/* Fullscreen layout must not vertically centre information pages. */
+body.mode-excel main.container,
+body.mode-analysis main.container,
+body.mode-reading main.container {
+    display: block !important;
+    min-height: 0 !important;
+    padding-top: 18px !important;
+    padding-bottom: 32px !important;
+}
+
+/* FINAL workspace rule — keep every route on the same wide canvas as home
+   and data. Earlier historical rules deliberately used narrow study cards;
+   this final layer owns the current product layout. */
+body.mode-preview main.container,
+body.mode-game main.container,
+body.mode-reading main.container,
+body.mode-analysis main.container,
+body.mode-end main.container,
+body.mode-excel main.container {
+    width: var(--app-content-width) !important;
+    max-width: var(--app-content-width) !important;
+    min-height: calc(100svh - var(--app-header-height)) !important;
+    padding-top: clamp(14px, 2vh, 26px) !important;
+    padding-bottom: clamp(20px, 3vh, 38px) !important;
+}
+
+body.mode-preview #preview-screen,
+body.mode-game #game-screen,
+body.mode-reading #reading-screen,
+body.mode-analysis #analysis-screen,
+body.mode-end #end-screen,
+body.mode-excel #excel-upload-screen {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.mode-preview #preview-screen,
+body.mode-game #game-screen {
+    min-height: calc(100svh - var(--app-header-height) - clamp(30px, 5vh, 64px)) !important;
+}
+
+body.mode-preview #preview-screen #single-word-card,
+body.mode-game #game-screen .game-card,
+body.mode-reading #reading-screen .reading-content {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+body.mode-game #game-screen .game-header,
+body.mode-game #game-screen .game-review-bar {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Readable measure inside a wide game board: the canvas grows, not the
+   distance between answers. */
+body.mode-game #game-screen .game-card > h2,
+body.mode-game #game-screen .game-card > .question-cn,
+body.mode-game #game-screen .game-card > .audio-main-btn,
+body.mode-game #game-screen .game-card > .active-recall-options,
+body.mode-game #game-screen .game-card > .letter-game-instruction,
+body.mode-game #game-screen .game-card > .answer-slots,
+body.mode-game #game-screen .game-card > .letter-bank,
+body.mode-game #game-screen .game-card > .flex,
+body.mode-game #game-screen .game-card > .feedback-box,
+body.mode-game #game-screen .game-card > .hint-box,
+body.mode-game #game-screen .game-card > .answer-record {
+    width: min(100%, 1060px);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 900px) {
+    body.mode-preview main.container,
+    body.mode-game main.container,
+    body.mode-reading main.container,
+    body.mode-analysis main.container,
+    body.mode-end main.container,
+    body.mode-excel main.container {
+        min-height: 0 !important;
+    }
+}
+
+/* FINAL-DATA-PAGE-SHELL-END: active routes keep the data-page shell after
+   the legacy screen rules, while hidden screens remain truly hidden. */
+body.mode-preview #preview-screen:not(.screen-hidden),
+body.mode-game #game-screen:not(.screen-hidden),
+body.mode-reading #reading-screen:not(.screen-hidden) {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: clamp(12px, 1.6vw, 22px) !important;
+}
+
+body.mode-preview #preview-screen .preview-header,
+body.mode-game #game-screen .game-header,
+body.mode-reading #reading-screen .page-header {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: clamp(72px, 8vh, 100px) !important;
+    margin: 0 !important;
+    padding: clamp(16px, 2vw, 28px) clamp(18px, 2.4vw, 36px) !important;
+    border-radius: 28px !important;
+    background: linear-gradient(180deg, #fffefd 0%, #fffaf2 100%) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+    box-shadow: 0 28px 58px -44px rgba(23, 50, 77, 0.5) !important;
+}
+
+body.mode-preview #preview-screen #preview-stage-track,
+body.mode-preview #preview-screen #single-word-card,
+body.mode-game #game-screen .game-card,
+body.mode-reading #reading-screen .reading-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+}
+
+body.mode-preview #preview-screen #preview-stage-track {
+    padding: clamp(12px, 1.3vw, 18px) clamp(16px, 2vw, 28px) !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+}
+
+body.mode-preview #preview-screen #single-word-card,
+body.mode-game #game-screen .game-card,
+body.mode-reading #reading-screen .reading-content {
+    border-radius: 28px !important;
+    background: linear-gradient(180deg, #fffefd 0%, #fffaf2 100%) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+    box-shadow: 0 28px 58px -44px rgba(23, 50, 77, 0.5) !important;
+}
+
+body.mode-preview #preview-screen .preview-image-stage {
+    min-height: clamp(320px, 48vh, 620px) !important;
+    padding: clamp(18px, 3vw, 42px) !important;
+}
+
+body.mode-preview #preview-screen #preview-word-image,
+body.mode-preview #preview-screen #preview-missing-image {
+    width: min(760px, 88%) !important;
+    max-width: 100% !important;
+    max-height: min(58vh, 590px) !important;
+    margin: auto !important;
+}
+
+body.mode-preview #preview-screen .preview-word-strip {
+    width: min(980px, calc(100% - 36px)) !important;
+    margin: 0 auto !important;
+    padding: clamp(18px, 2.5vw, 30px) !important;
+}
+
+body.mode-preview #preview-screen .preview-actions {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: clamp(14px, 1.8vw, 24px) !important;
+    border-top: 1px solid rgba(23, 50, 77, 0.08) !important;
+    background: transparent !important;
+}
+
+body.mode-game #game-screen .game-header {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+}
+
+body.mode-game #game-screen .progress-shell,
+body.mode-game #game-screen .progress-text,
+body.mode-game #game-screen .game-review-bar {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.mode-game #game-screen .game-review-bar {
+    padding: clamp(12px, 1.6vw, 20px) clamp(16px, 2vw, 28px) !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+}
+
+body.mode-game #game-screen .game-card {
+    min-height: clamp(520px, 64vh, 760px) !important;
+    padding: clamp(28px, 4vw, 56px) clamp(18px, 4vw, 64px) !important;
+    display: grid !important;
+    align-content: center !important;
+    justify-items: stretch !important;
+    gap: clamp(12px, 1.5vh, 20px) !important;
+}
+
+body.mode-game #game-screen .active-recall-options,
+body.mode-game #game-screen .letter-bank,
+body.mode-game #game-screen .answer-slots {
+    width: min(100%, 1060px) !important;
+    max-width: 1060px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+body.mode-reading #reading-screen .reading-actions {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: clamp(10px, 1.4vw, 18px) !important;
+}
+
+body.mode-reading #reading-screen .reading-content {
+    min-height: clamp(540px, 66vh, 820px) !important;
+    padding: clamp(24px, 3vw, 44px) !important;
+}
+
+@media (max-width: 900px) {
+    body.mode-preview #preview-screen .preview-header,
+    body.mode-game #game-screen .game-header,
+    body.mode-reading #reading-screen .page-header {
+        min-height: 0 !important;
+        border-radius: 22px !important;
+    }
+
+    body.mode-game #game-screen .game-card,
+    body.mode-reading #reading-screen .reading-content {
+        min-height: 0 !important;
+    }
+
+body.mode-reading #reading-screen .reading-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* FINAL-END-BANNER-CLEANUP: result page should feel finished, not like another
+   card prompt. Hide the redundant app tile and make the top white progress line
+   complete across the orange banner. */
+html body.mode-end #end-screen .app-mark-large {
+    display: none !important;
+}
+
+html body.mode-end #time-progress {
+    width: 100% !important;
+}
+
+#app-header > .w-full {
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+#app-header #time-progress {
+    min-width: 0 !important;
+}
+
+/* FINAL-REVIEW-QUEUE-UI: compact challenge controls and a calmer result page. */
+body.mode-game #game-screen .game-card > .audio-main-btn,
+body.mode-game #game-screen #game-pronounce-btn {
+    width: fit-content !important;
+    min-width: clamp(116px, 10vw, 156px) !important;
+    max-width: min(320px, 90%) !important;
+    justify-self: center !important;
+    margin: clamp(2px, 0.6vh, 8px) auto clamp(10px, 1.4vh, 16px) !important;
+    padding: 8px 18px !important;
+    border-radius: 999px !important;
+    font-size: clamp(0.9rem, 1vw, 1rem) !important;
+    white-space: nowrap !important;
+}
+
+body.mode-game #game-screen .game-card > .letter-action-row,
+body.mode-game #game-screen .game-card > .flex.letter-action-row {
+    width: fit-content !important;
+    max-width: 100% !important;
+    justify-self: center !important;
+    margin: clamp(6px, 1vh, 12px) auto 0 !important;
+    gap: clamp(8px, 1vw, 12px) !important;
+}
+
+body.mode-game #game-screen .letter-action-row .secondary-btn {
+    min-width: clamp(88px, 7.4vw, 116px) !important;
+    min-height: clamp(42px, 4.6vh, 50px) !important;
+    padding: 8px 16px !important;
+    border-radius: 16px !important;
+}
+
+body.mode-game #game-screen #submit-btn {
+    width: fit-content !important;
+    min-width: clamp(156px, 13vw, 220px) !important;
+    justify-self: center !important;
+    margin: clamp(6px, 1vh, 12px) auto 0 !important;
+    padding-inline: clamp(28px, 4vw, 52px) !important;
+}
+
+body.mode-game #game-screen .question-cn {
+    max-width: min(100%, 900px) !important;
+    justify-self: center !important;
+    overflow-wrap: anywhere !important;
+}
+
+body.mode-game #game-screen .active-recall-options {
+    align-self: center !important;
+}
+
+body.mode-game #game-screen .active-recall-option {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+}
+
+body.mode-end #end-screen:not(.screen-hidden) {
+    display: grid !important;
+    gap: clamp(12px, 1.5vw, 18px) !important;
+    align-content: start !important;
+    text-align: center !important;
+}
+
+body.mode-end #end-screen .app-mark-large {
+    width: clamp(46px, 4.4vw, 58px) !important;
+    height: clamp(46px, 4.4vw, 58px) !important;
+    margin: 0 auto !important;
+    border-radius: 16px !important;
+    font-size: clamp(1rem, 1.4vw, 1.25rem) !important;
+}
+
+body.mode-end #end-screen #result-icon {
+    width: clamp(58px, 5.2vw, 72px) !important;
+    height: clamp(58px, 5.2vw, 72px) !important;
+    margin: 0 auto !important;
+    border-radius: 22px !important;
+    font-size: clamp(1.2rem, 2vw, 1.6rem) !important;
+}
+
+body.mode-end #end-screen #result-title {
+    margin: 0 !important;
+    color: #17324d !important;
+    font-size: clamp(1.25rem, 2.2vw, 1.9rem) !important;
+    letter-spacing: -0.03em !important;
+}
+
+body.mode-end #end-screen #result-message {
+    margin: -6px 0 2px !important;
+    color: #60758f !important;
+    font-size: clamp(0.92rem, 1.15vw, 1.05rem) !important;
+    font-weight: 750 !important;
+}
+
+body.mode-end #end-screen .result-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: clamp(10px, 1.2vw, 16px) !important;
+    width: 100% !important;
+    margin: clamp(4px, 0.8vh, 10px) 0 !important;
+}
+
+body.mode-end #end-screen .result-grid > div {
+    min-height: clamp(64px, 8vh, 86px) !important;
+    display: grid !important;
+    place-items: center !important;
+    gap: 2px !important;
+    padding: clamp(12px, 1.4vw, 18px) !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, 0.86) !important;
+    color: #60758f !important;
+    font-size: clamp(0.82rem, 0.96vw, 0.94rem) !important;
+    font-weight: 800 !important;
+}
+
+body.mode-end #end-screen .result-grid strong {
+    color: #17324d !important;
+    font-size: clamp(1rem, 1.45vw, 1.25rem) !important;
+}
+
+body.mode-end #end-screen #result-review-panel {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: clamp(18px, 2vw, 26px) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+    border-radius: 28px !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 250, 242, 0.9)) !important;
+    box-shadow: 0 22px 52px -44px rgba(23, 50, 77, 0.45) !important;
+}
+
+body.mode-end #end-screen #result-review-panel h2 {
+    margin: 0 0 8px !important;
+    color: #17324d !important;
+    font-size: clamp(1.02rem, 1.35vw, 1.22rem) !important;
+}
+
+body.mode-end #end-screen #result-review-summary {
+    max-width: 760px !important;
+    margin: 0 auto 10px !important;
+    color: #60758f !important;
+    font-size: clamp(0.9rem, 1vw, 1rem) !important;
+    font-weight: 750 !important;
+}
+
+body.mode-end #end-screen #result-review-words {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+}
+
+body.mode-end #end-screen #review-wrong-btn {
+    width: fit-content !important;
+    min-width: 132px !important;
+    min-height: 44px !important;
+    margin: 0 auto !important;
+    padding: 9px 20px !important;
+}
+
+body.mode-end #end-screen .end-primary-actions {
+    width: min(720px, 100%) !important;
+    margin: clamp(8px, 1vh, 12px) auto 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: clamp(10px, 1.3vw, 16px) !important;
+}
+
+body.mode-end #end-screen .end-primary-actions .primary-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: clamp(50px, 5.6vh, 60px) !important;
+    border-radius: 20px !important;
+}
+
+body.mode-end #end-screen .end-more-actions {
+    margin-top: 0 !important;
+}
+
+body.mode-end #end-screen .end-more-actions summary {
+    min-height: 36px !important;
+    padding: 6px 12px !important;
+    border-radius: 999px !important;
+    font-size: 0.82rem !important;
+}
+
+body.mode-reading #reading-screen .reading-option,
+body.mode-reading #reading-screen .reading-target-word {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+}
+
+body.mode-reading #reading-screen .reading-question-card {
+    overflow: hidden !important;
+}
+
+@media (max-width: 900px) {
+    body.mode-end #end-screen .result-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    body.mode-end #end-screen .end-primary-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* FINAL-DATA-PAGE-SHELL: study, game and story share the same spacious
+   dashboard shell as the learning-data page.  Keep this block last so it
+   wins over the older, narrower responsive variants above. */
+body.mode-preview #preview-screen,
+body.mode-game #game-screen,
+body.mode-reading #reading-screen {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: clamp(12px, 1.6vw, 22px) !important;
+}
+
+body.mode-preview #preview-screen .preview-header,
+body.mode-game #game-screen .game-header,
+body.mode-reading #reading-screen .page-header {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: clamp(72px, 8vh, 100px) !important;
+    margin: 0 !important;
+    padding: clamp(16px, 2vw, 28px) clamp(18px, 2.4vw, 36px) !important;
+    border-radius: 28px !important;
+    background: linear-gradient(180deg, #fffefd 0%, #fffaf2 100%) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+    box-shadow: 0 28px 58px -44px rgba(23, 50, 77, 0.5) !important;
+}
+
+body.mode-preview #preview-screen .preview-header h1,
+body.mode-game #game-screen .game-header h1,
+body.mode-reading #reading-screen .page-header h1 {
+    font-size: clamp(1.45rem, 2.6vw, 2.35rem) !important;
+    line-height: 1.12 !important;
+}
+
+body.mode-preview #preview-screen #preview-stage-track {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: clamp(12px, 1.3vw, 18px) clamp(16px, 2vw, 28px) !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+}
+
+body.mode-preview #preview-screen #single-word-card,
+body.mode-game #game-screen .game-card,
+body.mode-reading #reading-screen .reading-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border-radius: 28px !important;
+    background: linear-gradient(180deg, #fffefd 0%, #fffaf2 100%) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+    box-shadow: 0 28px 58px -44px rgba(23, 50, 77, 0.5) !important;
+}
+
+body.mode-preview #preview-screen #single-word-card {
+    overflow: hidden !important;
+}
+
+body.mode-preview #preview-screen #preview-study-step:not(.hidden) {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+}
+
+body.mode-preview #preview-screen .preview-image-stage {
+    flex: 1 1 auto !important;
+    min-height: clamp(320px, 48vh, 620px) !important;
+    padding: clamp(18px, 3vw, 42px) !important;
+    border-radius: 22px !important;
+}
+
+body.mode-preview #preview-screen #preview-word-image,
+body.mode-preview #preview-screen #preview-missing-image {
+    width: min(760px, 88%) !important;
+    max-width: 100% !important;
+    max-height: min(58vh, 590px) !important;
+    margin: auto !important;
+}
+
+body.mode-preview #preview-screen .preview-word-strip {
+    width: 100% !important;
+    max-width: 980px !important;
+    margin: 0 auto !important;
+    padding: clamp(18px, 2.5vw, 30px) !important;
+}
+
+body.mode-preview #preview-screen .preview-actions {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: clamp(14px, 1.8vw, 24px) !important;
+    border-top: 1px solid rgba(23, 50, 77, 0.08) !important;
+    background: transparent !important;
+}
+
+body.mode-game #game-screen .game-header {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+}
+
+body.mode-game #game-screen .progress-shell,
+body.mode-game #game-screen .progress-text,
+body.mode-game #game-screen .game-review-bar {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.mode-game #game-screen .game-review-bar {
+    padding: clamp(12px, 1.6vw, 20px) clamp(16px, 2vw, 28px) !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+}
+
+body.mode-game #game-screen .game-card {
+    min-height: clamp(520px, 64vh, 760px) !important;
+    padding: clamp(28px, 4vw, 56px) clamp(18px, 4vw, 64px) !important;
+    display: grid !important;
+    align-content: center !important;
+    justify-items: stretch !important;
+    gap: clamp(12px, 1.5vh, 20px) !important;
+}
+
+body.mode-game #game-screen .active-recall-options,
+body.mode-game #game-screen .letter-bank,
+body.mode-game #game-screen .answer-slots {
+    width: min(100%, 1060px) !important;
+    max-width: 1060px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+body.mode-reading #reading-screen .reading-actions {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: clamp(10px, 1.4vw, 18px) !important;
+}
+
+body.mode-reading #reading-screen .reading-actions button {
+    min-height: clamp(52px, 6vh, 72px) !important;
+}
+
+body.mode-reading #reading-screen .reading-content {
+    min-height: clamp(540px, 66vh, 820px) !important;
+    padding: clamp(24px, 3vw, 44px) !important;
+}
+
+@media (max-width: 900px) {
+    body.mode-preview #preview-screen .preview-header,
+    body.mode-game #game-screen .game-header,
+    body.mode-reading #reading-screen .page-header {
+        min-height: 0 !important;
+        border-radius: 22px !important;
+    }
+
+    body.mode-game #game-screen .game-card,
+    body.mode-reading #reading-screen .reading-content {
+        min-height: 0 !important;
+    }
+
+    body.mode-reading #reading-screen .reading-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Full-viewport workspaces: every primary route uses the same spacious canvas
+   as the home screen, while keeping its own learning task visually focused. */
+body.mode-preview main.container,
+body.mode-game main.container,
+body.mode-reading main.container,
+body.mode-analysis main.container {
+    display: flex !important;
+    align-items: stretch !important;
+    min-height: calc(100svh - var(--app-header-height)) !important;
+    padding-top: clamp(14px, 2vh, 26px) !important;
+    padding-bottom: clamp(18px, 3vh, 38px) !important;
+}
+
+body.mode-preview #preview-screen,
+body.mode-game #game-screen,
+body.mode-reading #reading-screen,
+body.mode-analysis #analysis-screen {
+    width: 100% !important;
+    max-width: var(--app-content-width) !important;
+    min-height: calc(100svh - var(--app-header-height) - clamp(32px, 5vh, 64px)) !important;
+}
+
+/* Card learning: header, progress, learning surface and navigation form one
+   evenly spaced column. The current step receives the available canvas. */
+body.mode-preview #preview-screen {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: clamp(8px, 1.2vh, 14px);
+}
+
+body.mode-preview #preview-screen .preview-header,
+body.mode-preview #preview-screen .preview-stage-track {
+    flex: 0 0 auto;
+    margin-bottom: 0 !important;
+}
+
+body.mode-preview #preview-screen #single-word-card {
+    flex: 1 1 auto;
+    min-height: min(620px, calc(100svh - var(--app-header-height) - 170px));
+    display: flex !important;
+    flex-direction: column !important;
+    border-radius: clamp(24px, 2vw, 32px);
+    overflow: hidden !important;
+}
+
+body.mode-preview #preview-screen #preview-study-step:not(.hidden),
+body.mode-preview #preview-screen #preview-helper-step:not(.hidden),
+body.mode-preview #preview-screen #preview-quiz-step:not(.hidden) {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+body.mode-preview #preview-screen #preview-study-step:not(.hidden) {
+    display: flex !important;
+    flex-direction: column;
+}
+
+body.mode-preview #preview-screen .preview-image-stage {
+    flex: 1 1 auto;
+    min-height: clamp(320px, 48vh, 620px) !important;
+    padding: clamp(20px, 3vw, 38px) !important;
+}
+
+body.mode-preview #preview-screen #preview-word-image,
+body.mode-preview #preview-screen .missing-image-state {
+    width: min(760px, 88%) !important;
+    max-height: min(58vh, 590px) !important;
+}
+
+body.mode-preview #preview-screen .preview-word-strip {
+    width: min(720px, calc(100% - 48px)) !important;
+    margin: clamp(12px, 2vh, 20px) auto !important;
+}
+
+body.mode-preview #preview-screen .preview-actions {
+    flex: 0 0 auto;
+    grid-template-columns: minmax(160px, 0.85fr) minmax(260px, 1.3fr) minmax(160px, 0.85fr) !important;
+    padding: clamp(14px, 2vh, 22px) clamp(18px, 3vw, 34px) !important;
+}
+
+/* Game: information stays quiet at the top; the active-recall panel is a
+   centered, balanced stage that grows with both width and height. */
+body.mode-game #game-screen {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: clamp(8px, 1.3vh, 14px);
+}
+
+body.mode-game #game-screen .game-header,
+body.mode-game #game-screen .game-review-bar {
+    width: min(100%, 1120px) !important;
+    max-width: none !important;
+}
+
+body.mode-game #game-screen .game-card {
+    width: min(100%, 1120px) !important;
+    max-width: none !important;
+    flex: 1 1 auto;
+    min-height: min(570px, calc(100svh - var(--app-header-height) - 150px));
+    display: grid;
+    align-content: center;
+    gap: clamp(10px, 1.6vh, 18px);
+    padding: clamp(26px, 4vw, 58px) !important;
+    border-radius: clamp(24px, 2vw, 32px);
+}
+
+body.mode-game #game-screen .active-recall-options {
+    width: min(100%, 920px);
+    margin: 0 auto;
+    gap: clamp(12px, 1.5vw, 18px) !important;
+}
+
+body.mode-game #game-screen .active-recall-option {
+    min-height: clamp(66px, 8vh, 88px);
+}
+
+/* Reading: the story and questions share the same full-page reading desk. */
+body.mode-reading #reading-screen {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: clamp(12px, 1.8vh, 20px);
+}
+
+body.mode-reading #reading-screen .page-header,
+body.mode-reading #reading-screen .reading-actions {
+    flex: 0 0 auto;
+    margin: 0 !important;
+}
+
+body.mode-reading #reading-screen .reading-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: min(100%, 900px);
+    margin: 0 auto !important;
+    gap: 12px;
+}
+
+body.mode-reading #reading-screen .reading-content {
+    flex: 1 1 auto;
+    min-height: min(610px, calc(100svh - var(--app-header-height) - 150px));
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    grid-template-areas:
+        "guide guide"
+        "targets targets"
+        "story questions"
+        "story cloze"
+        "story builder";
+    align-content: stretch;
+    gap: clamp(12px, 1.6vw, 20px);
+    padding: clamp(20px, 3vw, 38px) !important;
+    border-radius: clamp(24px, 2vw, 32px);
+}
+
+body.mode-reading #reading-screen .reading-guide { grid-area: guide; }
+body.mode-reading #reading-screen .reading-target-words { grid-area: targets; }
+body.mode-reading #reading-screen .reading-story { grid-area: story; margin: 0; }
+body.mode-reading #reading-screen #reading-questions-list { grid-area: questions; }
+body.mode-reading #reading-screen #reading-cloze-list { grid-area: cloze; }
+body.mode-reading #reading-screen #reading-sentence-builder { grid-area: builder; }
+
+/* Data: the summary fills the top row, then detailed cards use a symmetric
+   two-column dashboard rather than a long single-column report. */
+body.mode-analysis #analysis-screen {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: clamp(14px, 1.8vw, 24px);
+}
+
+body.mode-analysis #analysis-screen .page-header,
+body.mode-analysis #analysis-screen .analysis-grid,
+body.mode-analysis #analysis-screen .report-panel,
+body.mode-analysis #analysis-screen .report-panel + .records-panel {
+    grid-column: 1 / -1;
+    margin: 0 !important;
+}
+
+body.mode-analysis #analysis-screen .analysis-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: clamp(10px, 1.4vw, 18px);
+}
+
+body.mode-analysis #analysis-screen .records-panel {
+    min-height: 100%;
+    margin: 0 !important;
+    padding: clamp(18px, 2vw, 28px) !important;
+    border-radius: clamp(22px, 1.8vw, 28px);
+}
+
+@media (max-width: 900px) {
+    body.mode-preview main.container,
+    body.mode-game main.container,
+    body.mode-reading main.container,
+    body.mode-analysis main.container {
+        display: block !important;
+        min-height: 0 !important;
+    }
+
+    body.mode-preview #preview-screen,
+    body.mode-game #game-screen,
+    body.mode-reading #reading-screen,
+    body.mode-analysis #analysis-screen {
+        min-height: 0 !important;
+    }
+
+    body.mode-preview #preview-screen #single-word-card,
+    body.mode-game #game-screen .game-card,
+    body.mode-reading #reading-screen .reading-content {
+        min-height: 0;
+    }
+
+    body.mode-reading #reading-screen .reading-content {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "guide"
+            "targets"
+            "story"
+            "questions"
+            "cloze"
+            "builder";
+    }
+
+    body.mode-analysis #analysis-screen {
+        grid-template-columns: 1fr;
+    }
+
+    body.mode-analysis #analysis-screen > * {
+        grid-column: 1 !important;
+    }
+
+    body.mode-analysis #analysis-screen .analysis-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    body.mode-preview #preview-screen .preview-actions,
+    body.mode-reading #reading-screen .reading-actions {
+        grid-template-columns: 1fr !important;
+    }
+
+    body.mode-preview #preview-screen .preview-image-stage {
+        min-height: 280px !important;
+    }
+
+    body.mode-analysis #analysis-screen .analysis-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Home is a real two-panel canvas on desktop: the illustration must not end
+   halfway down the settings card, and the four entry buttons share one grid. */
+@media (min-width: 901px) {
+    body.mode-start #start-screen .playful-home-layout {
+        grid-template-rows: minmax(0, 1fr);
+        align-items: stretch;
+    }
+
+    body.mode-start #start-screen .playful-home-main {
+        display: flex !important;
+        min-height: 0;
+    }
+
+    body.mode-start #start-screen .playful-hero {
+        flex: 1 1 auto;
+        height: auto !important;
+        min-height: 0 !important;
+        justify-content: center;
+    }
+
+    body.mode-start #start-screen .playful-home-title {
+        margin-block: auto;
+    }
+
+    body.mode-start #start-screen .playful-home-panel {
+        justify-content: space-between;
+    }
+
+    body.mode-start #start-screen .compact-action-grid {
+        grid-template-rows: repeat(2, minmax(clamp(58px, 8vh, 86px), 1fr));
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
+
+/* Clear learning path, inspired by the best language-learning products:
+   one visible goal, one small sequence, and no decorative empty centre. */
+body.mode-start #start-screen .playful-hero {
+    justify-content: space-between;
+}
+
+body.mode-start #start-screen .home-hero-intro {
+    position: relative;
+    z-index: 1;
+    max-width: min(82%, 780px);
+}
+
+body.mode-start #start-screen .home-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 5px 11px;
+    border: 1px solid rgba(23, 50, 77, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.66);
+    color: #f05f3c;
+    font-size: clamp(0.78rem, 1vw, 0.92rem);
+    font-weight: 900;
+}
+
+body.mode-start #start-screen .playful-home-title {
+    margin: clamp(14px, 2vh, 22px) 0 8px !important;
+}
+
+body.mode-start #start-screen .home-hero-intro p {
+    margin: 0;
+    color: #60758f;
+    font-size: clamp(1rem, 1.35vw, 1.3rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+body.mode-start #start-screen .home-hero-steps {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: min(100%, 700px);
+    gap: clamp(8px, 1.2vw, 14px);
+}
+
+body.mode-start #start-screen .home-hero-steps span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: clamp(46px, 6vh, 62px);
+    padding: 8px 12px;
+    border: 1px solid rgba(23, 50, 77, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.62);
+    color: #17324d;
+    font-size: clamp(0.86rem, 1.1vw, 1rem);
+    font-weight: 900;
+}
+
+body.mode-start #start-screen .home-hero-steps b {
+    display: inline-flex;
+    width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #23b7a4;
+    color: #fff;
+    font-size: 0.78rem;
+}
+
+/* A spacious outer canvas does not mean over-wide answers. The workspace fills
+   the page, while the answer content stays at a comfortable reading measure. */
+body.mode-preview #preview-screen,
+body.mode-game #game-screen {
+    max-width: 1520px !important;
+}
+
+body.mode-preview #preview-screen #single-word-card,
+body.mode-game #game-screen .game-card {
+    width: 100% !important;
+}
+
+body.mode-game #game-screen .active-recall-options,
+body.mode-game #game-screen .answer-slots,
+body.mode-game #game-screen .letter-bank {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 900px) {
+    body.mode-start #start-screen .home-hero-intro {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 560px) {
+    body.mode-start #start-screen .home-hero-steps {
+        grid-template-columns: 1fr;
+        width: min(100%, 360px);
+    }
+}
+
+/* Final game hierarchy overrides. */
+body.mode-game main.container {
+    align-items: start !important;
+    padding-top: 18px !important;
+}
+
+body.mode-game #game-screen .game-header {
+    width: min(820px, 100%) !important;
+    min-height: 62px;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+    padding: 8px 12px !important;
+    border: 1px solid rgba(23, 50, 77, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: none;
+}
+
+body.mode-game #game-screen .game-header .grade-badge {
+    width: 34px;
+    height: 34px;
+    margin-right: 4px !important;
+}
+
+body.mode-game #game-screen .score-box,
+body.mode-game #game-screen .timer-box,
+body.mode-game #game-screen .game-progress-chip {
+    min-height: auto;
+    padding: 4px 8px;
+    border: 0;
+    background: transparent;
+    color: #60758f;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+body.mode-game #game-screen .score-box strong,
+body.mode-game #game-screen .timer-box strong,
+body.mode-game #game-screen .game-progress-chip {
+    color: #17324d;
+    font-weight: 900;
+}
+
+body.mode-game #game-screen .game-progress-chip { margin-right: auto; }
+
+body.mode-game #game-screen .game-header .home-btn {
+    min-height: 38px;
+    padding: 7px 14px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+}
+
+body.mode-game #game-screen .progress-shell,
+body.mode-game #game-screen #progress-text,
+body.mode-game #game-screen #question-helper,
+body.mode-game #game-screen #word-count.word-count-pill {
+    display: none !important;
+}
+
+body.mode-game #game-screen .game-review-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: min(820px, 100%);
+    min-height: 44px;
+    gap: 12px;
+    margin: 0 auto 10px;
+    padding: 6px 8px 6px 14px;
+    border: 1px solid rgba(35, 183, 164, 0.16);
+    border-radius: 15px;
+    background: rgba(239, 253, 250, 0.7);
+}
+
+body.mode-game #game-screen .game-review-bar.hidden { display: none !important; }
+
+body.mode-game #game-screen .today-review-summary {
+    width: auto !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    color: #60758f;
+    font-size: 0.82rem;
+    font-weight: 650;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.mode-game #game-screen #start-review-btn {
+    display: block !important;
+    flex: 0 0 auto;
+    min-height: 32px;
+    margin: 0 !important;
+    padding: 5px 11px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
+
+body.mode-game #game-screen .game-card {
+    width: min(820px, 100%) !important;
+    margin: 0 auto !important;
+    padding: 28px 28px 24px !important;
+    border-radius: 24px;
+    box-shadow: 0 24px 48px -42px rgba(23, 50, 77, 0.42);
+}
+
+body.mode-game #game-screen .game-card h2 {
+    margin: 0;
+    color: #f05f3c;
+    font-size: clamp(1.35rem, 2.4vw, 1.8rem) !important;
+    letter-spacing: -0.02em;
+}
+
+body.mode-game #game-screen .question-cn {
+    margin: 20px 0 12px;
+    color: #17324d;
+    font-size: clamp(2.5rem, 5vw, 4rem) !important;
+    letter-spacing: -0.04em;
+}
+
+body.mode-game #game-screen .audio-main-btn {
+    min-height: 34px;
+    margin: 0 0 18px;
+    padding: 5px 12px;
+    border-radius: 11px;
+    font-size: 0.82rem;
+}
+
+body.mode-game #game-screen .active-recall-options { gap: 10px !important; }
+
+body.mode-game #game-screen .active-recall-option {
+    min-height: 62px;
+    border-radius: 16px;
+    font-size: clamp(1rem, 1.8vw, 1.24rem);
+}
+
+body.mode-game #game-screen #hint-btn {
+    min-height: 34px;
+    margin-top: 12px;
+    padding: 5px 10px;
+    border: 0;
+    background: transparent;
+    color: #60758f;
+    font-size: 0.8rem;
+    box-shadow: none;
+}
+
+@media (max-width: 760px) {
+    body.mode-game main.container { padding-top: 12px !important; }
+    body.mode-game #game-screen .game-header { min-height: 54px; padding: 7px 9px !important; }
+    body.mode-game #game-screen .score-box,
+    body.mode-game #game-screen .timer-box { padding: 3px 4px; font-size: 0.76rem; }
+    body.mode-game #game-screen .game-review-bar { padding-left: 11px; }
+    body.mode-game #game-screen .today-review-summary { font-size: 0.76rem; }
+    body.mode-game #game-screen .game-card { padding: 22px 16px 18px !important; border-radius: 20px; }
+    body.mode-game #game-screen .active-recall-options { grid-template-columns: 1fr !important; }
+}
+
+/* 游戏页：将注意力留给当前题目。 */
+body.mode-game main.container {
+    align-items: start !important;
+    padding-top: 18px !important;
+}
+
+body.mode-game #game-screen .game-header {
+    width: min(820px, 100%) !important;
+    min-height: 62px;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+    padding: 8px 12px !important;
+    border: 1px solid rgba(23, 50, 77, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: none;
+}
+
+body.mode-game #game-screen .game-header .grade-badge {
+    width: 34px;
+    height: 34px;
+    margin-right: 4px !important;
+}
+
+body.mode-game #game-screen .score-box,
+body.mode-game #game-screen .timer-box,
+body.mode-game #game-screen .game-progress-chip {
+    min-height: auto;
+    padding: 4px 8px;
+    border: 0;
+    background: transparent;
+    color: #60758f;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+body.mode-game #game-screen .score-box strong,
+body.mode-game #game-screen .timer-box strong,
+body.mode-game #game-screen .game-progress-chip {
+    color: #17324d;
+    font-weight: 900;
+}
+
+body.mode-game #game-screen .game-progress-chip {
+    margin-right: auto;
+}
+
+body.mode-game #game-screen .game-header .home-btn {
+    min-height: 38px;
+    padding: 7px 14px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+}
+
+body.mode-game #game-screen .progress-shell,
+body.mode-game #game-screen #progress-text,
+body.mode-game #game-screen #question-helper,
+body.mode-game #game-screen #word-count.word-count-pill {
+    display: none !important;
+}
+
+body.mode-game #game-screen .game-review-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: min(820px, 100%);
+    min-height: 44px;
+    gap: 12px;
+    margin: 0 auto 10px;
+    padding: 6px 8px 6px 14px;
+    border: 1px solid rgba(35, 183, 164, 0.16);
+    border-radius: 15px;
+    background: rgba(239, 253, 250, 0.7);
+}
+
+body.mode-game #game-screen .game-review-bar.hidden {
+    display: none !important;
+}
+
+body.mode-game #game-screen .today-review-summary {
+    width: auto !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    color: #60758f;
+    font-size: 0.82rem;
+    font-weight: 650;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.mode-game #game-screen #start-review-btn {
+    display: block !important;
+    flex: 0 0 auto;
+    min-height: 32px;
+    margin: 0 !important;
+    padding: 5px 11px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
+
+body.mode-game #game-screen .game-card {
+    width: min(820px, 100%) !important;
+    margin: 0 auto !important;
+    padding: 28px 28px 24px !important;
+    border-radius: 24px;
+    box-shadow: 0 24px 48px -42px rgba(23, 50, 77, 0.42);
+}
+
+body.mode-game #game-screen .game-card h2 {
+    margin: 0;
+    color: #f05f3c;
+    font-size: clamp(1.35rem, 2.4vw, 1.8rem) !important;
+    letter-spacing: -0.02em;
+}
+
+body.mode-game #game-screen .question-cn {
+    margin: 20px 0 12px;
+    color: #17324d;
+    font-size: clamp(2.5rem, 5vw, 4rem) !important;
+    letter-spacing: -0.04em;
+}
+
+body.mode-game #game-screen .audio-main-btn {
+    min-height: 34px;
+    margin: 0 0 18px;
+    padding: 5px 12px;
+    border-radius: 11px;
+    font-size: 0.82rem;
+}
+
+body.mode-game #game-screen .active-recall-options {
+    gap: 10px !important;
+}
+
+body.mode-game #game-screen .active-recall-option {
+    min-height: 62px;
+    border-radius: 16px;
+    font-size: clamp(1rem, 1.8vw, 1.24rem);
+}
+
+body.mode-game #game-screen #hint-btn {
+    min-height: 34px;
+    margin-top: 12px;
+    padding: 5px 10px;
+    border: 0;
+    background: transparent;
+    color: #60758f;
+    font-size: 0.8rem;
+    box-shadow: none;
+}
+
+@media (max-width: 760px) {
+    body.mode-game main.container {
+        padding-top: 12px !important;
+    }
+
+    body.mode-game #game-screen .game-header {
+        min-height: 54px;
+        padding: 7px 9px !important;
+    }
+
+    body.mode-game #game-screen .score-box,
+    body.mode-game #game-screen .timer-box {
+        padding: 3px 4px;
+        font-size: 0.76rem;
+    }
+
+    body.mode-game #game-screen .game-review-bar {
+        align-items: center;
+        padding-left: 11px;
+    }
+
+    body.mode-game #game-screen .today-review-summary {
+        font-size: 0.76rem;
+    }
+
+    body.mode-game #game-screen .game-card {
+        padding: 22px 16px 18px !important;
+        border-radius: 20px;
+    }
+
+    body.mode-game #game-screen .active-recall-options {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* 简洁界面基线：一页一个主任务，其余信息按需展开。 */
+.screen-reader-copy {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+body.mode-excel main.container,
+body.mode-analysis main.container,
+body.mode-reading main.container {
+    display: block !important;
+    min-height: 0 !important;
+    padding-top: 18px !important;
+    padding-bottom: 32px !important;
+}
+
+body.mode-excel #excel-upload-screen {
+    display: grid;
+    gap: 14px;
+    width: min(760px, 100%);
+    max-width: 760px !important;
+}
+
+body.mode-excel #excel-upload-screen .page-header,
+body.mode-reading #reading-screen .page-header {
+    min-height: 68px;
+    margin: 0 !important;
+    padding: 14px 18px !important;
+}
+
+body.mode-excel #excel-upload-screen .page-header h1,
+body.mode-reading #reading-screen .page-header h1 {
+    font-size: clamp(1.65rem, 3vw, 2.35rem) !important;
+}
+
+body.mode-excel #excel-upload-screen .upload-panel {
+    padding: 22px !important;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 18px 42px -38px rgba(23, 50, 77, 0.45);
+}
+
+body.mode-excel .import-brief {
+    margin-bottom: 16px;
+}
+
+body.mode-excel .import-brief > div {
+    color: #17324d;
+    font-size: 1.14rem;
+    font-weight: 850;
+    letter-spacing: -0.01em;
+}
+
+body.mode-excel .import-brief p {
+    margin: 4px 0 0;
+    color: #6c7e92;
+    font-size: 0.92rem;
+    font-weight: 650;
+}
+
+body.mode-excel .upload-dropzone {
+    min-height: 154px;
+    margin-top: 0;
+    padding: 18px;
+    border: 1.5px dashed rgba(77, 141, 247, 0.4);
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(245, 249, 255, 0.9), rgba(255, 255, 255, 0.95));
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+body.mode-excel .upload-dropzone:hover {
+    transform: translateY(-1px);
+    border-color: rgba(35, 183, 164, 0.65);
+    background: linear-gradient(135deg, rgba(239, 253, 250, 0.92), rgba(255, 255, 255, 0.98));
+}
+
+body.mode-excel .upload-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    font-size: 1.28rem;
+    box-shadow: none;
+}
+
+body.mode-excel .upload-title {
+    font-size: 1.08rem;
+    letter-spacing: -0.01em;
+}
+
+body.mode-excel .upload-subtitle {
+    font-size: 0.83rem;
+    font-weight: 650;
+}
+
+body.mode-excel #excel-upload-status:not(.hidden) {
+    margin-top: 12px !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    font-size: 0.86rem !important;
+    line-height: 1.45;
+}
+
+body.mode-excel .import-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+body.mode-excel .import-actions .secondary-btn {
+    min-height: 40px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+}
+
+body.mode-excel .import-template-btn {
+    min-height: 40px;
+    padding: 8px 6px;
+    border: 0;
+    background: transparent;
+    color: #2f6ed6;
+    font-size: 0.9rem;
+    font-weight: 750;
+}
+
+body.mode-excel .import-template-btn:hover {
+    color: #f05f3c;
+}
+
+body.mode-excel .import-details {
+    margin-top: 18px;
+    border-top: 1px solid rgba(23, 50, 77, 0.1);
+}
+
+body.mode-excel .import-details summary {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+    cursor: pointer;
+    color: #60758f;
+    font-size: 0.9rem;
+    font-weight: 750;
+    list-style: none;
+}
+
+body.mode-excel .import-details summary::-webkit-details-marker {
+    display: none;
+}
+
+body.mode-excel .import-details summary::after {
+    content: '+';
+    margin-left: 7px;
+    color: #f05f3c;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+body.mode-excel .import-details[open] summary::after {
+    content: '−';
+}
+
+body.mode-excel .import-help-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px;
+    margin: 0 !important;
+    padding-bottom: 4px;
+}
+
+body.mode-excel .import-help-grid > div {
+    padding: 10px 0;
+    border: 0;
+    background: transparent;
+}
+
+body.mode-excel .import-help-grid h3 {
+    margin: 0 0 3px;
+    color: #17324d;
+    font-size: 0.83rem;
+}
+
+body.mode-excel .import-help-grid p {
+    margin: 0;
+    color: #718398;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+body.mode-start #start-screen .playful-panel-eyebrow {
+    color: #60758f;
+    letter-spacing: 0.05em;
+}
+
+body.mode-start #current-selection-display {
+    color: #718398 !important;
+    font-size: 0.82rem !important;
+}
+
+body.mode-preview #preview-screen .preview-header,
+body.mode-reading #reading-screen .page-header {
+    box-shadow: none;
+}
+
+body.mode-preview #preview-screen .preview-stage-track {
+    margin-top: 2px;
+    margin-bottom: 10px;
+}
+
+body.mode-preview #preview-screen .preview-stage-item {
+    font-size: 0.88rem;
+}
+
+body.mode-game #game-screen .game-header,
+body.mode-end #end-screen .result-grid,
+body.mode-reading #reading-screen .reading-actions {
+    box-shadow: none;
+}
+
+body.mode-reading #reading-screen .reading-content {
+    border-radius: 24px;
+}
+
+body.mode-game #game-screen .game-more-actions,
+body.mode-end #end-screen .end-more-actions {
+    position: relative;
+}
+
+body.mode-game #game-screen .game-more-actions summary,
+body.mode-end #end-screen .end-more-actions summary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 7px 12px;
+    border: 1px solid rgba(23, 50, 77, 0.14);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #60758f;
+    cursor: pointer;
+    font-size: 0.84rem;
+    font-weight: 750;
+    list-style: none;
+}
+
+body.mode-game #game-screen .game-more-actions summary::-webkit-details-marker,
+body.mode-end #end-screen .end-more-actions summary::-webkit-details-marker {
+    display: none;
+}
+
+body.mode-game #game-screen .game-more-actions > div {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 6px);
+    right: 0;
+    display: grid;
+    gap: 7px;
+    min-width: 132px;
+    padding: 8px;
+    border: 1px solid rgba(23, 50, 77, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 18px 34px -24px rgba(23, 50, 77, 0.35);
+}
+
+body.mode-game #game-screen .game-more-actions .secondary-btn {
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+body.mode-end #end-screen .end-primary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+body.mode-end #end-screen .end-primary-actions .primary-btn {
+    min-width: min(250px, 100%);
+}
+
+body.mode-end #end-screen .end-more-actions {
+    margin-top: 14px;
+}
+
+body.mode-end #end-screen .end-more-actions > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+body.mode-end #end-screen .end-more-actions summary {
+    margin: 0 auto;
+}
+
+@media (max-width: 760px) {
+    body.mode-excel main.container,
+    body.mode-analysis main.container,
+    body.mode-reading main.container {
+        padding-top: 12px !important;
+    }
+
+    body.mode-excel #excel-upload-screen .page-header,
+    body.mode-reading #reading-screen .page-header {
+        flex-direction: row !important;
+        align-items: center !important;
+        padding: 12px 14px !important;
+    }
+
+    body.mode-excel #excel-upload-screen .page-header h1,
+    body.mode-reading #reading-screen .page-header h1 {
+        font-size: 1.55rem !important;
+    }
+
+    body.mode-excel #excel-upload-screen .upload-panel {
+        padding: 16px !important;
+        border-radius: 20px;
+    }
+
+    body.mode-excel .upload-dropzone {
+        min-height: 142px;
+    }
+
+    body.mode-excel .import-help-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0;
+    }
+
+    body.mode-excel .import-help-grid > div {
+        border-bottom: 1px solid rgba(23, 50, 77, 0.07);
+    }
+
+    body.mode-excel .import-help-grid > div:last-child {
+        border-bottom: 0;
+    }
+}
+
+/* 数据页：顶部优先，首屏只保留能指导下一步学习的信息。 */
+body.mode-analysis main.container {
+    display: block !important;
+    min-height: 0 !important;
+    padding-top: 18px !important;
+    padding-bottom: 32px !important;
+}
+
+body.mode-analysis #analysis-screen {
+    display: grid;
+    gap: 12px;
+    width: min(1120px, 100%);
+    max-width: 1120px !important;
+}
+
+body.mode-analysis #analysis-screen .page-header {
+    min-height: 68px;
+    margin: 0 !important;
+    padding: 14px 18px !important;
+}
+
+body.mode-analysis #analysis-screen .page-header h1 {
+    font-size: clamp(1.65rem, 3vw, 2.35rem) !important;
+}
+
+body.mode-analysis #analysis-screen .analysis-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px;
+    margin: 0 !important;
+}
+
+body.mode-analysis #analysis-screen .analysis-grid > div {
+    min-height: 88px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    font-size: 0.88rem;
+    color: #60758f;
+}
+
+body.mode-analysis #analysis-screen .analysis-grid strong {
+    display: block;
+    margin-top: 4px;
+    color: #17324d;
+    font-size: clamp(1.45rem, 2.4vw, 2rem);
+    line-height: 1.05;
+}
+
+body.mode-analysis #parent-daily-report {
+    margin: 0 !important;
+    padding: 16px 18px !important;
+    border-radius: 20px;
+}
+
+body.mode-analysis .daily-report-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+body.mode-analysis .daily-report-heading span,
+body.mode-analysis .daily-report-title {
+    flex: 0 0 auto;
+    color: #f05f3c;
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+body.mode-analysis .daily-report-heading p,
+body.mode-analysis .daily-report-action {
+    margin: 0;
+    color: #526b86;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+body.mode-analysis .daily-report-action {
+    margin-top: 6px;
+}
+
+body.mode-analysis .parent-daily-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0 0 10px;
+}
+
+body.mode-analysis .parent-daily-grid div {
+    padding: 9px 12px;
+    border-radius: 14px;
+}
+
+body.mode-analysis .parent-daily-grid strong {
+    font-size: 1.25rem;
+}
+
+body.mode-analysis .daily-report-note {
+    color: #526b86;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+body.mode-analysis .daily-report-note strong {
+    color: #17324d;
+}
+
+body.mode-analysis #analysis-screen .records-panel {
+    margin-top: 4px !important;
+    padding: 18px !important;
+}
+
+@media (max-width: 760px) {
+    body.mode-analysis main.container {
+        padding-top: 12px !important;
+    }
+
+    body.mode-analysis #analysis-screen .page-header {
+        flex-direction: row !important;
+        align-items: center !important;
+        padding: 12px 14px !important;
+    }
+
+    body.mode-analysis #analysis-screen .page-header h1 {
+        font-size: 1.55rem !important;
+    }
+
+    body.mode-analysis #analysis-screen .page-header .home-btn {
+        min-height: 40px;
+        padding: 8px 14px;
+    }
+
+    body.mode-analysis #analysis-screen .analysis-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    body.mode-analysis #analysis-screen .analysis-grid > div {
+        min-height: 72px;
+        padding: 11px 12px;
+    }
+
+    body.mode-analysis .daily-report-heading {
+        display: block;
+    }
+
+    body.mode-analysis .daily-report-heading p {
+        margin-top: 4px;
+    }
+}
+
 /* Actual final preview-step guard.
    Each step scrolls inside the card while navigation remains visible. */
 html body.mode-preview main.container {
@@ -1596,6 +3463,8 @@ body.theme-playful main.container {
 #start-screen .playful-home-title {
     font-size: clamp(1.9rem, 4vw, 2.65rem);
     line-height: 1.12;
+    max-width: 72%;
+    margin-top: 8px;
 }
 
 #start-screen .playful-hero-copy {
@@ -1664,6 +3533,137 @@ body.theme-playful main.container {
     padding: 12px !important;
 }
 
+#start-screen .settings-panel-content {
+    display: grid;
+    gap: 12px;
+}
+
+#start-screen .settings-panel-content.hidden,
+#start-screen .study-setting-custom.hidden {
+    display: none !important;
+}
+
+#start-screen .study-setting-group {
+    display: grid;
+    gap: 9px;
+    padding: 11px;
+    border: 1px solid rgba(23, 50, 77, 0.08);
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.62);
+}
+
+#start-screen .study-setting-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: #17324d;
+    font-weight: 900;
+    font-size: 0.92rem;
+}
+
+#start-screen .study-setting-value {
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: #fff0e8;
+    color: #f05f3c;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+#start-screen .study-setting-presets {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+}
+
+#start-screen .study-setting-choice {
+    min-height: 36px !important;
+    padding: 6px 4px !important;
+    border: 1px solid rgba(23, 50, 77, 0.12) !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+    color: #5b6c82 !important;
+    box-shadow: none !important;
+    font-size: 0.76rem !important;
+    font-weight: 850 !important;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+#start-screen .study-setting-choice:hover,
+#start-screen .study-setting-choice.active {
+    border-color: #f26b48 !important;
+    background: linear-gradient(135deg, #ff8a5b, #f05f3c) !important;
+    color: #fff !important;
+    box-shadow: 0 10px 18px -14px rgba(240, 95, 60, 0.82) !important;
+}
+
+#start-screen .study-setting-choice:focus-visible {
+    outline: 3px solid rgba(77, 141, 247, 0.38);
+    outline-offset: 2px;
+}
+
+#start-screen .study-setting-custom {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding-top: 2px;
+}
+
+#start-screen .study-setting-custom > label:first-child {
+    margin: 0 !important;
+    color: #738198;
+    font-size: 0.76rem !important;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+#start-screen .study-setting-custom input[type="range"] {
+    width: 100%;
+    margin: 0;
+    accent-color: #f26b48;
+}
+
+#start-screen .study-setting-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin: 0 !important;
+    color: #5b6c82;
+    font-size: 0.76rem !important;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+#start-screen .study-setting-number input {
+    width: 48px;
+    margin: 0 !important;
+    padding: 5px 4px !important;
+    border: 1px solid rgba(23, 50, 77, 0.15) !important;
+    border-radius: 9px;
+    background: #fff;
+    color: #17324d;
+    font: inherit;
+    font-weight: 900;
+    text-align: center;
+}
+
+@media (max-width: 440px) {
+    #start-screen .study-setting-presets {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #start-screen .study-setting-custom {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    #start-screen .study-setting-custom > label:first-child {
+        grid-column: 1 / -1;
+    }
+}
+
 .compact-action-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1675,6 +3675,66 @@ body.theme-playful main.container {
     min-height: 44px !important;
 }
 
+.compact-action-grid .reading-home-action {
+    grid-column: auto;
+    width: 100%;
+    justify-self: stretch;
+}
+
+.settings-header-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) minmax(220px, 1fr);
+    align-items: center;
+    gap: 12px;
+}
+
+.settings-header-row h3 {
+    margin: 0;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    color: #17324d;
+}
+
+.settings-header-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 8px;
+}
+
+.library-settings-btn,
+.settings-toggle-btn {
+    min-height: 38px;
+    padding: 8px 10px;
+    border: 1px solid rgba(23, 50, 77, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.86);
+    color: #60758f;
+    font-size: 0.82rem;
+    font-weight: 850;
+    line-height: 1;
+    text-align: center;
+    box-shadow: 0 8px 18px -18px rgba(23, 50, 77, 0.45);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.library-settings-btn:hover,
+.settings-toggle-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(240, 95, 60, 0.22);
+    background: #fff7f2;
+    color: #f05f3c;
+}
+
+@media (max-width: 560px) {
+    .settings-header-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}
+
 .quiet-action-btn {
     min-height: 42px;
     padding: 10px 14px;
@@ -1683,6 +3743,26 @@ body.theme-playful main.container {
     color: #17324d;
     border: 1px solid rgba(23, 50, 77, 0.1);
     font-weight: 900;
+}
+
+/* 首页五个入口使用同一套主按钮语言；阅读单独成行但与上方按钮等宽居中。 */
+#start-screen .compact-action-grid > button {
+    min-height: 50px !important;
+    padding: 11px 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    background: linear-gradient(135deg, #ff8a5b 0%, #f05f3c 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 16px 28px -22px rgba(240, 95, 60, 0.78) !important;
+    font-weight: 900 !important;
+}
+
+#start-screen .compact-action-grid > button:hover {
+    background: linear-gradient(135deg, #ff966b 0%, #f05f3c 100%) !important;
+    box-shadow: 0 20px 32px -22px rgba(240, 95, 60, 0.9) !important;
+}
+
+@media (max-width: 440px) {
+    #start-screen .compact-action-grid .reading-home-action { width: 100%; }
 }
 
 #excel-upload-screen {
@@ -3321,6 +5401,28 @@ body.theme-playful #start-screen .playful-screen-card::after {
 .grade5 { background: linear-gradient(135deg, #687dff, #4f61e6); }
 .grade6 { background: linear-gradient(135deg, #1bc4bf, #0aa89e); }
 
+.app-mark {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #23b7a4, #159b8d);
+    color: #fff;
+    font-size: 0.95rem;
+    box-shadow: 0 10px 22px -16px rgba(21, 155, 141, 0.78);
+}
+
+.app-mark-large {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 12px;
+    border-radius: 15px;
+    font-size: 1.2rem;
+}
+
 .bg-grade1 { background: linear-gradient(90deg, #ff9b72, #ff8057); }
 .bg-grade2 { background: linear-gradient(90deg, #f7c560, #f1ab35); }
 .bg-grade3 { background: linear-gradient(90deg, #44c5e4, #2da9cc); }
@@ -3483,6 +5585,12 @@ body.theme-playful #start-screen .playful-screen-card::after {
 .answer-slot.filled {
     border-color: transparent;
     background: transparent;
+}
+
+.answer-slot.selected-target {
+    border-color: rgba(35, 183, 164, 0.7);
+    background: rgba(239, 253, 250, 0.78);
+    box-shadow: 0 0 0 4px rgba(35, 183, 164, 0.1);
 }
 
 .letter-drag-over {
@@ -5076,5 +7184,589 @@ body.mode-game #game-screen .active-recall-options,
 @media (min-width: 1024px) and (max-height: 819px) {
     body.mode-game #game-screen {
         transform: none;
+    }
+}
+
+/* Final game hierarchy overrides. */
+body.mode-game main.container { align-items: start !important; padding-top: 18px !important; }
+body.mode-game #game-screen .game-header {
+    width: min(820px, 100%) !important; min-height: 62px; justify-content: flex-start !important;
+    gap: 8px !important; margin-bottom: 8px !important; padding: 8px 12px !important;
+    border: 1px solid rgba(23, 50, 77, 0.08); border-radius: 18px;
+    background: rgba(255, 255, 255, 0.76); box-shadow: none;
+}
+body.mode-game #game-screen .game-header .grade-badge { width: 34px; height: 34px; margin-right: 4px !important; }
+body.mode-game #game-screen .score-box,
+body.mode-game #game-screen .timer-box,
+body.mode-game #game-screen .game-progress-chip {
+    min-height: auto; padding: 4px 8px; border: 0; background: transparent;
+    color: #60758f; font-size: 0.82rem; font-weight: 700;
+}
+body.mode-game #game-screen .score-box strong,
+body.mode-game #game-screen .timer-box strong,
+body.mode-game #game-screen .game-progress-chip { color: #17324d; font-weight: 900; }
+body.mode-game #game-screen .game-progress-chip { margin-right: auto; }
+body.mode-game #game-screen .game-header .home-btn { min-height: 38px; padding: 7px 14px; border-radius: 12px; font-size: 0.88rem; }
+body.mode-game #game-screen .progress-shell,
+body.mode-game #game-screen #progress-text,
+body.mode-game #game-screen #question-helper,
+body.mode-game #game-screen #word-count.word-count-pill { display: none !important; }
+body.mode-game #game-screen .game-review-bar {
+    display: flex; align-items: center; justify-content: space-between; width: min(820px, 100%);
+    min-height: 44px; gap: 12px; margin: 0 auto 10px; padding: 6px 8px 6px 14px;
+    border: 1px solid rgba(35, 183, 164, 0.16); border-radius: 15px; background: rgba(239, 253, 250, 0.7);
+}
+body.mode-game #game-screen .game-review-bar.hidden { display: none !important; }
+body.mode-game #game-screen .today-review-summary {
+    width: auto !important; min-height: auto !important; margin: 0 !important; padding: 0 !important;
+    overflow: hidden; color: #60758f; font-size: 0.82rem; font-weight: 650; line-height: 1.35;
+    text-overflow: ellipsis; white-space: nowrap;
+}
+body.mode-game #game-screen #start-review-btn {
+    display: block !important; flex: 0 0 auto; min-height: 32px; margin: 0 !important;
+    padding: 5px 11px; border-radius: 10px; font-size: 0.8rem;
+}
+body.mode-game #game-screen .game-card {
+    width: min(820px, 100%) !important; margin: 0 auto !important; padding: 28px 28px 24px !important;
+    border-radius: 24px; box-shadow: 0 24px 48px -42px rgba(23, 50, 77, 0.42);
+}
+body.mode-game #game-screen .game-card h2 { margin: 0; color: #f05f3c; font-size: clamp(1.35rem, 2.4vw, 1.8rem) !important; letter-spacing: -0.02em; }
+body.mode-game #game-screen .question-cn { margin: 20px 0 12px; color: #17324d; font-size: clamp(2.5rem, 5vw, 4rem) !important; letter-spacing: -0.04em; }
+body.mode-game #game-screen .audio-main-btn { min-height: 34px; margin: 0 0 18px; padding: 5px 12px; border-radius: 11px; font-size: 0.82rem; }
+body.mode-game #game-screen .active-recall-options { gap: 10px !important; }
+body.mode-game #game-screen .active-recall-option { min-height: 62px; border-radius: 16px; font-size: clamp(1rem, 1.8vw, 1.24rem); }
+body.mode-game #game-screen #hint-btn { min-height: 34px; margin-top: 12px; padding: 5px 10px; border: 0; background: transparent; color: #60758f; font-size: 0.8rem; box-shadow: none; }
+@media (max-width: 760px) {
+    body.mode-game main.container { padding-top: 12px !important; }
+    body.mode-game #game-screen .game-header { min-height: 54px; padding: 7px 9px !important; }
+    body.mode-game #game-screen .score-box, body.mode-game #game-screen .timer-box { padding: 3px 4px; font-size: 0.76rem; }
+    body.mode-game #game-screen .game-review-bar { padding-left: 11px; }
+    body.mode-game #game-screen .today-review-summary { font-size: 0.76rem; }
+    body.mode-game #game-screen .game-card { padding: 22px 16px 18px !important; border-radius: 20px; }
+    body.mode-game #game-screen .active-recall-options { grid-template-columns: 1fr !important; }
+}
+
+/* Responsive app-scale system: one rhythm for desktop, tablet, and phone. */
+:root {
+    --app-gutter: clamp(12px, 2vw, 36px);
+    --app-content-width: min(1680px, calc(100vw - (var(--app-gutter) * 2)));
+    --app-header-height: clamp(62px, 8vh, 76px);
+}
+
+body.theme-playful main.container {
+    width: var(--app-content-width) !important;
+    max-width: var(--app-content-width) !important;
+    padding: clamp(14px, 2vh, 26px) 0 clamp(22px, 3vh, 42px) !important;
+}
+
+#app-header {
+    min-height: var(--app-header-height);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 26px -24px rgba(23, 50, 77, 0.45) !important;
+}
+
+#app-header > .container {
+    width: var(--app-content-width) !important;
+    max-width: var(--app-content-width) !important;
+    min-height: calc(var(--app-header-height) - 4px);
+    padding: 8px 0 !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 8px 18px !important;
+}
+
+#app-header h1 {
+    font-family: "Avenir Next", "PingFang SC", sans-serif !important;
+    font-size: clamp(1.12rem, 2vw, 1.45rem) !important;
+    letter-spacing: -0.02em !important;
+}
+
+#app-header .text-xs.md\:text-sm {
+    font-size: 0.64rem !important;
+    letter-spacing: 0.09em !important;
+}
+
+#app-header #score,
+#app-header #timer,
+#app-header #word-source-indicator {
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 11px;
+    font-size: 0.78rem;
+    box-shadow: none;
+}
+
+#app-header > .w-full {
+    height: 3px !important;
+}
+
+body.mode-start main.container {
+    display: block !important;
+    min-height: calc(100svh - var(--app-header-height)) !important;
+}
+
+body.mode-start #start-screen {
+    width: 100%;
+    max-width: none !important;
+    min-height: calc(100svh - var(--app-header-height) - clamp(36px, 5vh, 68px));
+}
+
+body.mode-start #start-screen .playful-screen-card {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: inherit;
+    padding: clamp(16px, 2vw, 30px) !important;
+    border-radius: clamp(22px, 2vw, 32px) !important;
+}
+
+body.mode-start #start-screen .playful-home-layout {
+    grid-template-columns: minmax(0, 1.36fr) minmax(360px, 0.84fr);
+    min-height: calc(100svh - var(--app-header-height) - clamp(68px, 9vh, 118px));
+    gap: clamp(16px, 2vw, 28px);
+}
+
+body.mode-start #start-screen .playful-home-main,
+body.mode-start #start-screen .playful-home-panel {
+    min-height: 0;
+}
+
+body.mode-start #start-screen .playful-hero {
+    height: 100%;
+    min-height: 0 !important;
+    padding: clamp(24px, 3vw, 48px) !important;
+    border-radius: clamp(22px, 2vw, 30px) !important;
+}
+
+body.mode-start #start-screen .playful-home-title {
+    max-width: min(76%, 690px);
+    margin: 0;
+    font-size: clamp(2.35rem, 4.5vw, 4.6rem) !important;
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+}
+
+body.mode-start #start-screen .playful-home-panel {
+    height: 100%;
+    padding: clamp(18px, 2vw, 28px) !important;
+    gap: clamp(10px, 1.5vh, 16px);
+    border-radius: clamp(22px, 2vw, 30px);
+}
+
+body.mode-start #start-screen label {
+    margin-top: 0 !important;
+    font-size: clamp(0.86rem, 1vw, 0.98rem);
+}
+
+body.mode-start #start-screen select {
+    min-height: clamp(46px, 5.5vh, 60px);
+    padding: 10px 14px !important;
+    font-size: clamp(0.95rem, 1.15vw, 1.08rem);
+}
+
+body.mode-start #start-screen .playful-settings-shell {
+    margin-top: 2px !important;
+    padding: 12px 14px !important;
+}
+
+body.mode-start #start-screen .compact-action-grid {
+    grid-auto-rows: minmax(clamp(52px, 7vh, 74px), 1fr);
+    margin-top: auto;
+    gap: clamp(10px, 1.2vw, 14px);
+}
+
+body.mode-start #start-screen .compact-action-grid > button {
+    min-height: clamp(52px, 7vh, 74px) !important;
+    padding: 10px 16px !important;
+    font-size: clamp(0.98rem, 1.35vw, 1.2rem);
+}
+
+body.mode-start #start-screen #current-selection-display {
+    margin: 12px 0 0 !important;
+}
+
+body.mode-preview #preview-screen,
+body.mode-game #game-screen,
+body.mode-end #end-screen,
+body.mode-reading #reading-screen,
+body.mode-analysis #analysis-screen,
+body.mode-excel #excel-upload-screen {
+    width: min(100%, 1320px) !important;
+}
+
+body.mode-preview #preview-screen { max-width: 1040px !important; }
+body.mode-game #game-screen { max-width: 1120px !important; }
+body.mode-end #end-screen { max-width: 1080px !important; }
+body.mode-reading #reading-screen { max-width: 1240px !important; }
+body.mode-analysis #analysis-screen { max-width: 1320px !important; }
+body.mode-excel #excel-upload-screen { max-width: 920px !important; }
+
+body.mode-preview #preview-screen .preview-header,
+body.mode-game #game-screen .game-header,
+body.mode-reading #reading-screen .page-header,
+body.mode-analysis #analysis-screen .page-header,
+body.mode-excel #excel-upload-screen .page-header {
+    min-height: clamp(58px, 7vh, 74px);
+    padding: clamp(10px, 1.4vw, 18px) clamp(14px, 1.8vw, 24px) !important;
+}
+
+body.mode-preview #preview-screen .preview-actions button,
+body.mode-end #end-screen .end-primary-actions button,
+body.mode-reading #reading-screen .reading-actions button,
+body.mode-analysis #analysis-screen .page-header .home-btn,
+body.mode-excel #excel-upload-screen .page-header .home-btn {
+    min-height: clamp(42px, 5.2vh, 56px);
+}
+
+@media (max-width: 900px) {
+    :root { --app-gutter: 14px; }
+
+    #app-header > .container {
+        justify-content: space-between;
+    }
+
+    #app-header .text-xs.md\:text-sm,
+    #app-header #word-source-indicator {
+        display: none;
+    }
+
+    body.mode-start #start-screen .playful-home-layout {
+        grid-template-columns: 1fr;
+        min-height: 0;
+    }
+
+    body.mode-start #start-screen .playful-hero {
+        min-height: clamp(250px, 38vh, 390px) !important;
+    }
+
+    body.mode-start #start-screen .playful-home-panel {
+        height: auto;
+    }
+
+    body.mode-preview #preview-screen,
+    body.mode-game #game-screen,
+    body.mode-end #end-screen,
+    body.mode-reading #reading-screen,
+    body.mode-analysis #analysis-screen,
+    body.mode-excel #excel-upload-screen {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 560px) {
+    #app-header > .container { min-height: 56px; }
+    #app-header #score, #app-header #timer { min-height: 28px; padding: 0 7px; font-size: 0.72rem; }
+    #app-header > .container > .flex:first-child { flex: 1 1 auto; }
+    body.mode-start #start-screen .playful-screen-card { padding: 12px !important; }
+    body.mode-start #start-screen .playful-home-title { font-size: clamp(2rem, 10vw, 3.1rem) !important; }
+    body.mode-start #start-screen .compact-action-grid { grid-auto-rows: minmax(52px, 1fr); }
+}
+
+/* Information pages always begin at the top, even on tall screens. */
+body.mode-excel main.container,
+body.mode-analysis main.container,
+body.mode-reading main.container {
+    display: block !important;
+    min-height: 0 !important;
+    padding-top: 18px !important;
+    padding-bottom: 32px !important;
+}
+
+/* FINAL-HOME-CONTROL-ROWS: grade, difficulty and study settings share one
+   calm control language: label above, equal-width rounded control below. */
+body.mode-start #start-screen .home-control-stack {
+    --home-control-height: clamp(56px, 6.4vh, 66px);
+    display: grid !important;
+    gap: clamp(10px, 1.35vh, 14px) !important;
+    margin-top: clamp(4px, 0.8vh, 8px) !important;
+}
+
+body.mode-start #start-screen .home-control-field {
+    display: grid !important;
+    gap: clamp(5px, 0.75vh, 8px) !important;
+}
+
+body.mode-start #start-screen .home-control-field > label {
+    margin: 0 !important;
+    color: #17324d !important;
+    font-size: clamp(0.88rem, 1.05vw, 1rem) !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+}
+
+body.mode-start #start-screen .home-control-field > select,
+body.mode-start #start-screen .home-control-settings-field > .playful-settings-shell {
+    width: 100% !important;
+    min-height: var(--home-control-height) !important;
+    border-radius: 22px !important;
+    border: 1px solid rgba(23, 50, 77, 0.12) !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 14px 30px -28px rgba(23, 50, 77, 0.52) !important;
+}
+
+body.mode-start #start-screen .home-control-field > select {
+    padding: 0 clamp(18px, 2vw, 24px) !important;
+    color: #17324d !important;
+    font-size: clamp(1rem, 1.25vw, 1.16rem) !important;
+    font-weight: 750 !important;
+}
+
+body.mode-start #start-screen .home-control-settings-field > .playful-settings-shell {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+body.mode-start #start-screen .home-control-settings-field .settings-header-row {
+    min-height: var(--home-control-height) !important;
+    padding: 0 clamp(14px, 1.6vw, 20px) !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+body.mode-start #start-screen .home-control-settings-field .settings-header-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: clamp(8px, 1vw, 12px) !important;
+}
+
+body.mode-start #start-screen .home-control-settings-field .library-settings-btn,
+body.mode-start #start-screen .home-control-settings-field .settings-toggle-btn {
+    min-height: clamp(42px, 4.8vh, 50px) !important;
+    border-radius: 999px !important;
+    background: #fff !important;
+    font-size: clamp(0.82rem, 1vw, 0.95rem) !important;
+    font-weight: 900 !important;
+}
+
+body.mode-start #start-screen .home-control-settings-field .settings-panel-content {
+    margin-top: 0 !important;
+    padding: clamp(12px, 1.6vh, 16px) clamp(12px, 1.6vw, 18px) clamp(14px, 1.8vh, 18px) !important;
+    border-top: 1px solid rgba(23, 50, 77, 0.08) !important;
+}
+
+@media (max-width: 560px) {
+    body.mode-start #start-screen .home-control-stack {
+        --home-control-height: 56px;
+    }
+}
+
+/* FINAL-WIDE-CANVAS: all primary routes use the home/data page width. */
+body.mode-preview main.container,
+body.mode-game main.container,
+body.mode-reading main.container,
+body.mode-analysis main.container,
+body.mode-end main.container,
+body.mode-excel main.container {
+    width: var(--app-content-width) !important;
+    max-width: var(--app-content-width) !important;
+    min-height: calc(100svh - var(--app-header-height)) !important;
+    padding-top: clamp(14px, 2vh, 26px) !important;
+    padding-bottom: clamp(20px, 3vh, 38px) !important;
+}
+
+body.mode-preview #preview-screen,
+body.mode-game #game-screen,
+body.mode-reading #reading-screen,
+body.mode-analysis #analysis-screen,
+body.mode-end #end-screen,
+body.mode-excel #excel-upload-screen {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.mode-preview #preview-screen,
+body.mode-game #game-screen {
+    min-height: calc(100svh - var(--app-header-height) - clamp(30px, 5vh, 64px)) !important;
+}
+
+body.mode-preview #preview-screen #single-word-card,
+body.mode-game #game-screen .game-card,
+body.mode-reading #reading-screen .reading-content {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+body.mode-game #game-screen .game-header,
+body.mode-game #game-screen .game-review-bar {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* The board grows with the screen; answer text still stays comfortably close. */
+body.mode-game #game-screen .game-card > h2,
+body.mode-game #game-screen .game-card > .question-cn,
+body.mode-game #game-screen .game-card > .audio-main-btn,
+body.mode-game #game-screen .game-card > .active-recall-options,
+body.mode-game #game-screen .game-card > .letter-game-instruction,
+body.mode-game #game-screen .game-card > .answer-slots,
+body.mode-game #game-screen .game-card > .letter-bank,
+body.mode-game #game-screen .game-card > .flex,
+body.mode-game #game-screen .game-card > .feedback-box,
+body.mode-game #game-screen .game-card > .hint-box,
+body.mode-game #game-screen .game-card > .answer-record {
+    width: min(100%, 1060px);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 900px) {
+    body.mode-preview main.container,
+    body.mode-game main.container,
+    body.mode-reading main.container,
+    body.mode-analysis main.container,
+    body.mode-end main.container,
+    body.mode-excel main.container {
+        min-height: 0 !important;
+    }
+}
+
+/* FINAL-DATA-PAGE-SHELL-END: active routes keep the data-page shell after
+   the legacy screen rules, while hidden screens remain truly hidden. */
+body.mode-preview #preview-screen:not(.screen-hidden),
+body.mode-game #game-screen:not(.screen-hidden),
+body.mode-reading #reading-screen:not(.screen-hidden) {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: clamp(12px, 1.6vw, 22px) !important;
+}
+
+body.mode-preview #preview-screen .preview-header,
+body.mode-game #game-screen .game-header,
+body.mode-reading #reading-screen .page-header {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: clamp(72px, 8vh, 100px) !important;
+    margin: 0 !important;
+    padding: clamp(16px, 2vw, 28px) clamp(18px, 2.4vw, 36px) !important;
+    border-radius: 28px !important;
+    background: linear-gradient(180deg, #fffefd 0%, #fffaf2 100%) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+    box-shadow: 0 28px 58px -44px rgba(23, 50, 77, 0.5) !important;
+}
+
+body.mode-preview #preview-screen #preview-stage-track,
+body.mode-preview #preview-screen #single-word-card,
+body.mode-game #game-screen .game-card,
+body.mode-reading #reading-screen .reading-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+}
+
+body.mode-preview #preview-screen #preview-stage-track {
+    padding: clamp(12px, 1.3vw, 18px) clamp(16px, 2vw, 28px) !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+}
+
+body.mode-preview #preview-screen #single-word-card,
+body.mode-game #game-screen .game-card,
+body.mode-reading #reading-screen .reading-content {
+    border-radius: 28px !important;
+    background: linear-gradient(180deg, #fffefd 0%, #fffaf2 100%) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+    box-shadow: 0 28px 58px -44px rgba(23, 50, 77, 0.5) !important;
+}
+
+body.mode-preview #preview-screen .preview-image-stage {
+    min-height: clamp(320px, 48vh, 620px) !important;
+    padding: clamp(18px, 3vw, 42px) !important;
+}
+
+body.mode-preview #preview-screen #preview-word-image,
+body.mode-preview #preview-screen #preview-missing-image {
+    width: min(760px, 88%) !important;
+    max-width: 100% !important;
+    max-height: min(58vh, 590px) !important;
+    margin: auto !important;
+}
+
+body.mode-preview #preview-screen .preview-word-strip {
+    width: min(980px, calc(100% - 36px)) !important;
+    margin: 0 auto !important;
+    padding: clamp(18px, 2.5vw, 30px) !important;
+}
+
+body.mode-preview #preview-screen .preview-actions {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: clamp(14px, 1.8vw, 24px) !important;
+    border-top: 1px solid rgba(23, 50, 77, 0.08) !important;
+    background: transparent !important;
+}
+
+body.mode-game #game-screen .game-header {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+}
+
+body.mode-game #game-screen .progress-shell,
+body.mode-game #game-screen .progress-text,
+body.mode-game #game-screen .game-review-bar {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.mode-game #game-screen .game-review-bar {
+    padding: clamp(12px, 1.6vw, 20px) clamp(16px, 2vw, 28px) !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    border: 1px solid rgba(23, 50, 77, 0.08) !important;
+}
+
+body.mode-game #game-screen .game-card {
+    min-height: clamp(520px, 64vh, 760px) !important;
+    padding: clamp(28px, 4vw, 56px) clamp(18px, 4vw, 64px) !important;
+    display: grid !important;
+    align-content: center !important;
+    justify-items: stretch !important;
+    gap: clamp(12px, 1.5vh, 20px) !important;
+}
+
+body.mode-game #game-screen .active-recall-options,
+body.mode-game #game-screen .letter-bank,
+body.mode-game #game-screen .answer-slots {
+    width: min(100%, 1060px) !important;
+    max-width: 1060px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+body.mode-reading #reading-screen .reading-actions {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: clamp(10px, 1.4vw, 18px) !important;
+}
+
+body.mode-reading #reading-screen .reading-content {
+    min-height: clamp(540px, 66vh, 820px) !important;
+    padding: clamp(24px, 3vw, 44px) !important;
+}
+
+@media (max-width: 900px) {
+    body.mode-preview #preview-screen .preview-header,
+    body.mode-game #game-screen .game-header,
+    body.mode-reading #reading-screen .page-header {
+        min-height: 0 !important;
+        border-radius: 22px !important;
+    }
+
+    body.mode-game #game-screen .game-card,
+    body.mode-reading #reading-screen .reading-content {
+        min-height: 0 !important;
+    }
+
+    body.mode-reading #reading-screen .reading-actions {
+        grid-template-columns: 1fr !important;
     }
 }
