@@ -1,0 +1,22 @@
+ffconcat version 1.0
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/01-home.png'
+duration 54.762
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/01-home.png'
+duration 8.100
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/02-learn-picture.png'
+duration 7.863
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/03-learn-listen-memory.png'
+duration 28.587
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/04-learn-active-recall.png'
+duration 7.750
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/05-challenge.png'
+duration 26.788
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/07-data.png'
+duration 18.175
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/06-reading-story.png'
+duration 21.425
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/07-data.png'
+duration 14.050
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/08-closing-home.png'
+duration 21.852
+file '/Users/guangluliu/AI编程结果/背英语单词/video-output/星词探险-demo/frames/08-closing-home.png'

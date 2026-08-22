@@ -24,6 +24,10 @@
 - iPhone Safari：打开网址 → 分享 → 添加到主屏幕。
 - Android Chrome：打开网址 → 右上角菜单 → 添加到主屏幕/安装应用。
 
+更详细的 GitHub 首次上传、日常修改后更新、缓存处理步骤，请看：
+
+`docs/GitHub上传与更新操作说明.md`
+
 ## 其他免费 HTTPS 方案
 
 - Cloudflare Pages：免费、速度快，也可以后续绑定自己的域名。

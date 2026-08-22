@@ -2291,10 +2291,13 @@ html body.mode-reading #reading-screen.reading-scrolled .reading-content {
 .word-star-level-panel {
   position: fixed;
   z-index: 122;
-  width: min(360px, calc(100vw - 24px));
+  width: min(420px, calc(100vw - 24px));
+  max-height: min(72vh, 620px);
   padding: 14px;
   display: grid;
   gap: 10px;
+  overflow: auto;
+  overscroll-behavior: contain;
   border-radius: 22px;
   color: #17324d;
   background: rgba(255, 255, 255, 0.97);

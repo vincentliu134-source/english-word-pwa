@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>词星探险</title>
+  <title>星词探险</title>
   <meta name="theme-color" content="#23b7a4">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="词星">
+  <meta name="apple-mobile-web-app-title" content="星词">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="assets/icons/word-cards-180.png">
@@ -32,7 +32,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="assets/css/enhanced-word-tool.css?v=20260816-end-banner-v24">
-  <link rel="stylesheet" href="assets/css/preview-redesign.css?v=20260822-reading-keyword-v29">
+  <link rel="stylesheet" href="assets/css/preview-redesign.css?v=20260822-brand-starword-v30">
 </head>
 <body class="theme-playful mode-start bg-gradient-to-br from-sky-50 via-orange-50 to-emerald-50 min-h-screen font-game text-gray-800 overflow-x-hidden">
   <header id="app-header" class="bg-primary text-white shadow-lg">
@@ -40,16 +40,16 @@
       <div class="app-brand-area flex items-center">
         <i class="fa fa-clone text-2xl mr-3"></i>
         <div class="app-brand-copy">
-          <h1 class="text-[clamp(1.2rem,3vw,1.8rem)] font-bold">词星探险</h1>
+          <h1 class="text-[clamp(1.2rem,3vw,1.8rem)] font-bold">星词探险</h1>
           <p class="text-xs md:text-sm tracking-widest opacity-80">小学英语 · 看图 · 听读 · 回忆</p>
         </div>
-        <div id="word-star-meter" class="word-star-meter" aria-live="polite" title="词星成长进度">
+        <div id="word-star-meter" class="word-star-meter" aria-live="polite" title="星词成长进度">
           <span id="word-star-meter-icon" class="word-star-meter-icon">⭐</span>
           <div class="word-star-meter-body">
             <div class="word-star-meter-top">
               <strong id="word-star-title">新手探险家</strong>
               <span id="score">0/10</span>
-              <button id="word-star-level-btn" class="word-star-level-btn" type="button" aria-expanded="false" aria-label="查看词星等级">等级</button>
+              <button id="word-star-level-btn" class="word-star-level-btn" type="button" aria-expanded="false" aria-label="查看星词等级">等级</button>
             </div>
             <div class="word-star-track" aria-hidden="true">
               <div id="word-star-progress" class="word-star-progress"></div>
@@ -226,7 +226,7 @@
     <section id="preview-screen" class="screen-hidden max-w-7xl mx-auto">
       <div class="preview-header">
         <div class="flex items-center gap-4">
-          <span class="app-mark" role="img" aria-label="词星探险"><i class="fa fa-clone"></i></span>
+          <span class="app-mark" role="img" aria-label="星词探险"><i class="fa fa-clone"></i></span>
           <div>
             <h1>单词学习 <span id="preview-word-count" class="word-count-pill">1/10</span></h1>
             <p id="preview-step-hint" class="screen-reader-copy">第 1/6 步：先看图认识单词。</p>
@@ -320,7 +320,7 @@
 
     <section id="game-screen" class="screen-hidden max-w-6xl mx-auto">
       <div class="game-header">
-        <span class="app-mark" role="img" aria-label="词星探险"><i class="fa fa-clone"></i></span>
+        <span class="app-mark" role="img" aria-label="星词探险"><i class="fa fa-clone"></i></span>
         <div class="score-box">得分 <strong>0</strong></div>
         <div class="timer-box">时间 <strong>60</strong></div>
         <div id="word-count" class="game-progress-chip">1/10</div>
@@ -370,7 +370,7 @@
     </section>
 
     <section id="end-screen" class="screen-hidden max-w-5xl mx-auto text-center">
-      <span class="app-mark app-mark-large" role="img" aria-label="词星探险"><i class="fa fa-clone"></i></span>
+      <span class="app-mark app-mark-large" role="img" aria-label="星词探险"><i class="fa fa-clone"></i></span>
       <div id="result-icon" class="result-icon">🎉</div>
       <h1 id="result-title">完成啦</h1>
       <p id="result-message"></p>

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "word-tool-pwa-20260822-reading-keyword-v44";
+const CACHE_VERSION = "word-tool-pwa-20260822-brand-starword-v45";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;

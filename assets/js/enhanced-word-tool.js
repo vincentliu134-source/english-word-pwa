@@ -148,13 +148,21 @@
         const TTS_SENTENCE_RATE = 0.92;
         const TTS_STORY_RATE = 0.9;
         const TTS_NATURAL_PAUSE_MS = 180;
+        // 星星会来自学新词、挑战、阅读和间隔复习。阈值按“六年小学词库 + 多轮复习”
+        // 设计，避免孩子学完一个年级后很快封顶，同时保留前期的成就反馈。
         const WORD_STAR_LEVELS = [
-            { min: 0, title: '新手探险家' },
-            { min: 10, title: '单词小侦探' },
-            { min: 30, title: '星光记忆师' },
-            { min: 60, title: '词汇小队长' },
-            { min: 100, title: '英语冒险家' },
-            { min: 200, title: '词星大师' }
+            { min: 0, title: '星词启航者' },
+            { min: 120, title: '看图小侦探' },
+            { min: 300, title: '听读小达人' },
+            { min: 600, title: '回忆小勇士' },
+            { min: 1000, title: '单词探险家' },
+            { min: 1500, title: '句子小领航' },
+            { min: 2200, title: '课本词汇官' },
+            { min: 3000, title: '阅读冒险家' },
+            { min: 4000, title: '复习规划师' },
+            { min: 5200, title: '星词远征家' },
+            { min: 6600, title: '英语小领航' },
+            { min: 8000, title: '星词大师' }
         ];
         const QUESTION_TYPES = ['english_to_chinese', 'chinese_to_english', 'audio_to_english', 'spelling', 'cloze'];
         const PREVIEW_QUESTION_TYPES = ['image_to_english', 'audio_to_english', 'spelling', 'english_to_chinese'];
@@ -2318,7 +2326,7 @@
             try {
                 localStorage.setItem(WORD_STAR_PROFILE_KEY, JSON.stringify(wordStarProfile));
             } catch (error) {
-                console.warn('词星数据保存失败', error);
+                console.warn('星词数据保存失败', error);
             }
         }
 
@@ -2540,18 +2548,18 @@
                 panel = document.createElement('div');
                 panel.className = 'word-star-level-panel';
                 panel.setAttribute('role', 'dialog');
-                panel.setAttribute('aria-label', '词星等级说明');
+                panel.setAttribute('aria-label', '星词等级说明');
                 document.body.appendChild(panel);
             }
 
             panel.innerHTML = `
-                <h3>词星等级</h3>
-                <p>${currentLevel.isMaxLevel ? '已经到达最高称号，继续积累词星。' : `距离“${escapeHtml(currentLevel.nextTitle)}”还差 ${Math.max(0, currentLevel.span - currentLevel.progress)} 颗星。`}</p>
+                <h3>星词等级</h3>
+                <p>${currentLevel.isMaxLevel ? '已经到达最高称号，继续积累星词。' : `距离“${escapeHtml(currentLevel.nextTitle)}”还差 ${Math.max(0, currentLevel.span - currentLevel.progress)} 颗星。`}</p>
                 <div class="word-star-level-list">${levelItems}</div>
             `;
 
             const triggerRect = triggerBtn.getBoundingClientRect();
-            const panelWidth = Math.min(360, window.innerWidth - 24);
+            const panelWidth = Math.min(420, window.innerWidth - 24);
             panel.style.top = `${Math.max(12, triggerRect.bottom + 10)}px`;
             panel.style.left = `${Math.min(window.innerWidth - panelWidth - 12, Math.max(12, triggerRect.right - panelWidth))}px`;
             requestAnimationFrame(() => {

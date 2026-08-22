@@ -1,6 +1,6 @@
 {
-  "name": "词星探险",
-  "short_name": "词星",
+  "name": "星词探险",
+  "short_name": "星词",
   "description": "小学英语 · 看图 · 听读 · 回忆：适合小学生的单词学习、主动回忆、错词复习和阅读小故事工具。",
   "lang": "zh-CN",
   "start_url": "./enhanced-word-tool.html",

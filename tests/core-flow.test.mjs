@@ -140,20 +140,20 @@ test("PWA 安装配置完整", () => {
   }
 });
 
-test("产品品牌统一为词星探险，手机桌面使用短名词星", () => {
+test("产品品牌统一为星词探险，手机桌面使用短名星词", () => {
   const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
   const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
   const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifest"), "utf8"));
   const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
-  assert.match(html, /<title>词星探险<\/title>/);
-  assert.match(html, /<meta name="apple-mobile-web-app-title" content="词星">/);
-  assert.match(html, /<h1[^>]*>词星探险<\/h1>/);
+  assert.match(html, /<title>星词探险<\/title>/);
+  assert.match(html, /<meta name="apple-mobile-web-app-title" content="星词">/);
+  assert.match(html, /<h1[^>]*>星词探险<\/h1>/);
   assert.match(html, /小学英语 · 看图 · 听读 · 回忆/);
-  assert.equal(manifest.name, "词星探险");
-  assert.equal(manifest.short_name, "词星");
-  assert.match(index, /<title>词星探险<\/title>/);
-  assert.match(pkg.description, /词星探险/);
+  assert.equal(manifest.name, "星词探险");
+  assert.equal(manifest.short_name, "星词");
+  assert.match(index, /<title>星词探险<\/title>/);
+  assert.match(pkg.description, /星词探险/);
   assert.doesNotMatch(html, /小学英语单词记忆系统|小学英语 · 听读 · 回忆|>单词卡<|背单词|回到单词卡/);
 });
 
@@ -370,7 +370,7 @@ test("听读与记忆的四个选项使用接近一致的卡片高度", () => {
   const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
   const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
 
-  assert.match(html, /preview-redesign\.css\?v=20260822-reading-keyword-v29/);
+  assert.match(html, /preview-redesign\.css\?v=20260822-brand-starword-v30/);
   assert.match(css, /FINAL-HELPER-EQUAL-CARDS/);
   assert.match(css, /\.preview-core-audio,[\s\S]*\.preview-core-example,[\s\S]*\.helper-card \{[\s\S]*min-height: clamp\(96px, 12vh, 124px\)/);
   assert.match(css, /\.helper-card \{[\s\S]*height: 100% !important[\s\S]*justify-content: center/);
@@ -398,7 +398,7 @@ test("学习、游戏和阅读页使用同一宽屏画布并保留橙色横幅",
   assert.match(css, /html body\.mode-preview #preview-screen,[\s\S]*html body\.mode-reading #reading-screen \{[\s\S]*max-width: none !important/);
   assert.match(css, /html body\.mode-preview #preview-screen #single-word-card[\s\S]*min-height: clamp\(560px, 68vh, 860px\)/);
   assert.match(css, /html body\.mode-game #game-screen \.game-card,[\s\S]*html body\.mode-reading #reading-screen \.reading-content \{[\s\S]*min-height: clamp\(560px, 66vh, 820px\)/);
-  assert.match(sw, /word-tool-pwa-20260822-reading-keyword-v44/);
+  assert.match(sw, /word-tool-pwa-20260822-brand-starword-v45/);
 });
 
 test("背单词页采用一屏学习面板，顶部、步骤、内容和底部操作同时可见", () => {
@@ -552,7 +552,7 @@ test("阅读页点击故事里的绿色目标词显示中文，上方目标词�
   assert.match(css, /html body\.mode-reading #reading-screen \.reading-target-word \{[\s\S]*cursor: default !important/);
 });
 
-test("词星积分接入学新词、挑战和读故事，阅读页保持一屏操作区", () => {
+test("星词积分接入学新词、挑战和读故事，阅读页保持一屏操作区", () => {
   const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
   const js = fs.readFileSync(path.join(root, "assets/js/enhanced-word-tool.js"), "utf8");
   const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
@@ -560,6 +560,10 @@ test("词星积分接入学新词、挑战和读故事，阅读页保持一屏�
   assert.match(html, /class="app-brand-area[\s\S]*id="word-star-meter"[\s\S]*id="word-star-title"[\s\S]*id="score"[\s\S]*id="word-star-level-btn"[\s\S]*id="word-star-progress"/);
   assert.match(js, /const WORD_STAR_PROFILE_KEY = 'englishWordStarProfile'/);
   assert.match(js, /const WORD_STAR_LEVELS = \[/);
+  assert.match(js, /\{ min: 0, title: '星词启航者' \}/);
+  assert.match(js, /\{ min: 1000, title: '单词探险家' \}/);
+  assert.match(js, /\{ min: 3000, title: '阅读冒险家' \}/);
+  assert.match(js, /\{ min: 8000, title: '星词大师' \}/);
   assert.match(js, /function getWordStarLevel\(totalStars = wordStarProfile\.totalStars\)/);
   assert.match(js, /function awardWordStars\(amount = 1, source = '练习', detail = ''\)/);
   assert.match(js, /awardWordStars\(1, '学新词', word\?\.english \|\| ''\)/);
@@ -589,6 +593,7 @@ test("词星积分接入学新词、挑战和读故事，阅读页保持一屏�
   assert.match(css, /#app-header \.word-star-meter \{/);
   assert.match(css, /#app-header \.word-star-level-btn \{/);
   assert.match(css, /\.word-star-level-panel \{/);
+  assert.match(css, /\.word-star-level-panel \{[\s\S]*max-height: min\(72vh, 620px\)[\s\S]*overflow: auto/);
   assert.match(css, /\.word-star-level-item\.current \{/);
   assert.match(css, /\.word-star-fly \{/);
   assert.match(css, /@keyframes wordStarFlyIn/);
