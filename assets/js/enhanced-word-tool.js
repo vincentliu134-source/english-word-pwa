@@ -143,7 +143,8 @@
         const GAME_WRONG_FEEDBACK_HOLD_MS = 1300;
         const CELEBRATION_MESSAGE_HOLD_MS = 2400;
         const IMAGE_PREFETCH_AHEAD_COUNT = 4;
-        const WORD_ASSET_PREFETCH_COUNT = 12;
+        const WORD_ASSET_PREFETCH_COUNT = 4;
+        const WORD_ASSET_PREFETCH_DELAY_MS = 900;
         const OPTIMIZED_IMAGE_PREFIX = 'assets/images/optimized/';
         const TTS_WORD_RATE = 0.84;
         const TTS_PHRASE_RATE = 0.86;
@@ -1297,22 +1298,39 @@
             return true;
         }
 
-        function preloadUrlsWithServiceWorker(urls) {
+        function runWhenBrowserIdle(callback, delay = WORD_ASSET_PREFETCH_DELAY_MS) {
+            if (typeof callback !== 'function') return;
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(callback, { timeout: Math.max(1200, delay + 800) });
+                return;
+            }
+            window.setTimeout(callback, delay);
+        }
+
+        function preloadUrlsWithServiceWorker(urls, options = {}) {
             const uniqueUrls = [...new Set((urls || []).filter(canPrefetchUrl))];
             if (uniqueUrls.length === 0 || !('serviceWorker' in navigator)) return;
 
-            const message = { type: 'CACHE_WORD_ASSETS', urls: uniqueUrls };
-            if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage(message);
-                return;
-            }
+            const sendMessage = () => {
+                const message = { type: 'CACHE_WORD_ASSETS', urls: uniqueUrls };
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage(message);
+                    return;
+                }
 
-            navigator.serviceWorker.ready
-                .then((registration) => {
-                    const worker = registration.active || registration.waiting || registration.installing;
-                    worker?.postMessage(message);
-                })
-                .catch(() => {});
+                navigator.serviceWorker.ready
+                    .then((registration) => {
+                        const worker = registration.active || registration.waiting || registration.installing;
+                        worker?.postMessage(message);
+                    })
+                    .catch(() => {});
+            };
+
+            if (options.defer) {
+                runWhenBrowserIdle(sendMessage, options.delay);
+            } else {
+                sendMessage();
+            }
         }
 
         function getWordAssetUrls(word) {
@@ -1353,7 +1371,7 @@
             });
         }
 
-        function preloadWordImages(words, startIndex = 0, count = IMAGE_PREFETCH_AHEAD_COUNT) {
+        function preloadWordImages(words, startIndex = 0, count = IMAGE_PREFETCH_AHEAD_COUNT, options = {}) {
             if (!Array.isArray(words) || words.length === 0) return;
             const start = Math.max(0, Number(startIndex) || 0);
             const end = Math.min(words.length, start + Math.max(1, Number(count) || IMAGE_PREFETCH_AHEAD_COUNT));
@@ -1361,12 +1379,14 @@
             for (let index = start; index < end; index++) {
                 const imageCandidates = getWordImageCandidates(words[index]);
                 urls.push(...imageCandidates);
-                preloadImageCandidates(imageCandidates);
+                if (options.immediateImages !== false) {
+                    preloadImageCandidates(imageCandidates);
+                }
             }
-            preloadUrlsWithServiceWorker(urls);
+            preloadUrlsWithServiceWorker(urls, options);
         }
 
-        function preloadWordAssets(words, startIndex = 0, count = WORD_ASSET_PREFETCH_COUNT) {
+        function preloadWordAssets(words, startIndex = 0, count = WORD_ASSET_PREFETCH_COUNT, options = {}) {
             if (!Array.isArray(words) || words.length === 0) return;
             const start = Math.max(0, Number(startIndex) || 0);
             const end = Math.min(words.length, start + Math.max(1, Number(count) || WORD_ASSET_PREFETCH_COUNT));
@@ -1374,10 +1394,22 @@
             for (let index = start; index < end; index++) {
                 const word = words[index];
                 const imageCandidates = getWordImageCandidates(word);
-                preloadImageCandidates(imageCandidates);
+                if (options.immediateImages !== false) {
+                    preloadImageCandidates(imageCandidates);
+                }
                 urls.push(...getWordAssetUrls(word));
             }
-            preloadUrlsWithServiceWorker(urls);
+            preloadUrlsWithServiceWorker(urls, options);
+        }
+
+        function scheduleWordAssetPreload(words, startIndex = 0, count = WORD_ASSET_PREFETCH_COUNT) {
+            runWhenBrowserIdle(() => {
+                preloadWordAssets(words, startIndex, count, {
+                    defer: true,
+                    immediateImages: false,
+                    delay: 300
+                });
+            });
         }
 
         function normalizeWordForGame(text) {
@@ -3040,7 +3072,7 @@
                 
                 // 洗牌算法确保无重复
                 gameWords = window.GameCore.selectWords(gradeWords, availableWords);
-                preloadWordAssets(gameWords, 0, Math.min(WORD_ASSET_PREFETCH_COUNT, gameWords.length));
+                scheduleWordAssetPreload(gameWords, 1, Math.min(WORD_ASSET_PREFETCH_COUNT, Math.max(0, gameWords.length - 1)));
             }
 
             wordAnswerRecords = gameWords.map(() => ({
@@ -3189,7 +3221,7 @@
             previewWordCount.textContent = `${currentPreviewIndex + 1}/${gameWords.length}`;
             setPreviewStep('study');
             schedulePreviewWordPronunciation(word, currentPreviewIndex);
-            preloadWordAssets(gameWords, currentPreviewIndex + 1);
+            preloadWordAssets(gameWords, currentPreviewIndex + 1, 2, { defer: true, delay: 500 });
 
             console.log('显示单词:', word.english, '索引:', currentPreviewIndex, '图片链接:', imageUrl);
         }
@@ -3859,7 +3891,7 @@
             document.getElementById('hint').classList.add('hidden');
             renderActiveQuestionInput(currentWord);
             updateMascotMessage('ready');
-            preloadWordAssets(gameWords, currentWordIndex + 1);
+            preloadWordAssets(gameWords, currentWordIndex + 1, 2, { defer: true, delay: 500 });
 
             if (activeQuestion.type === 'audio_to_english' || activeQuestion.type === 'spelling') {
                 setTimeout(() => {
