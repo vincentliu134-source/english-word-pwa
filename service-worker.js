@@ -1,4 +1,4 @@
-const CACHE_VERSION = "word-tool-pwa-20260823-fast-assets-v46";
+const CACHE_VERSION = "word-tool-pwa-20260823-mobile-polish-v47";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;

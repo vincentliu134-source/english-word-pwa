@@ -140,6 +140,19 @@ test("PWA 安装配置完整", () => {
   }
 });
 
+test("手机端使用安全区视口和专用紧凑布局", () => {
+  const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
+  const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
+
+  assert.match(html, /viewport-fit=cover/);
+  assert.match(html, /apple-mobile-web-app-status-bar-style" content="black-translucent"/);
+  assert.match(css, /MOBILE-POLISH-V31/);
+  assert.match(css, /@media \(max-width: 720px\)[\s\S]*#app-header \{[\s\S]*padding-top: max\(env\(safe-area-inset-top\), 10px\)/);
+  assert.match(css, /body\.mode-game #game-screen \.game-header \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css, /body\.mode-game #game-screen \.game-header \.grade-badge \{[\s\S]*display: none !important/);
+  assert.match(css, /body\.mode-reading #reading-screen \.reading-content \{[\s\S]*grid-template-columns: 1fr !important/);
+});
+
 test("产品品牌统一为星词探险，手机桌面使用短名星词", () => {
   const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
   const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
@@ -370,7 +383,7 @@ test("听读与记忆的四个选项使用接近一致的卡片高度", () => {
   const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
   const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
 
-  assert.match(html, /preview-redesign\.css\?v=20260822-brand-starword-v30/);
+  assert.match(html, /preview-redesign\.css\?v=20260823-mobile-polish-v31/);
   assert.match(css, /FINAL-HELPER-EQUAL-CARDS/);
   assert.match(css, /\.preview-core-audio,[\s\S]*\.preview-core-example,[\s\S]*\.helper-card \{[\s\S]*min-height: clamp\(96px, 12vh, 124px\)/);
   assert.match(css, /\.helper-card \{[\s\S]*height: 100% !important[\s\S]*justify-content: center/);
@@ -398,7 +411,7 @@ test("学习、游戏和阅读页使用同一宽屏画布并保留橙色横幅",
   assert.match(css, /html body\.mode-preview #preview-screen,[\s\S]*html body\.mode-reading #reading-screen \{[\s\S]*max-width: none !important/);
   assert.match(css, /html body\.mode-preview #preview-screen #single-word-card[\s\S]*min-height: clamp\(560px, 68vh, 860px\)/);
   assert.match(css, /html body\.mode-game #game-screen \.game-card,[\s\S]*html body\.mode-reading #reading-screen \.reading-content \{[\s\S]*min-height: clamp\(560px, 66vh, 820px\)/);
-  assert.match(sw, /word-tool-pwa-20260823-fast-assets-v46/);
+  assert.match(sw, /word-tool-pwa-20260823-mobile-polish-v47/);
 });
 
 test("背单词页采用一屏学习面板，顶部、步骤、内容和底部操作同时可见", () => {
