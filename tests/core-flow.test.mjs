@@ -398,7 +398,7 @@ test("学习、游戏和阅读页使用同一宽屏画布并保留橙色横幅",
   assert.match(css, /html body\.mode-preview #preview-screen,[\s\S]*html body\.mode-reading #reading-screen \{[\s\S]*max-width: none !important/);
   assert.match(css, /html body\.mode-preview #preview-screen #single-word-card[\s\S]*min-height: clamp\(560px, 68vh, 860px\)/);
   assert.match(css, /html body\.mode-game #game-screen \.game-card,[\s\S]*html body\.mode-reading #reading-screen \.reading-content \{[\s\S]*min-height: clamp\(560px, 66vh, 820px\)/);
-  assert.match(sw, /word-tool-pwa-20260822-brand-starword-v45/);
+  assert.match(sw, /word-tool-pwa-20260823-fast-assets-v46/);
 });
 
 test("背单词页采用一屏学习面板，顶部、步骤、内容和底部操作同时可见", () => {
@@ -657,8 +657,15 @@ test("弱网和离线模式会缓存图片并提前预热后续单词图", () =>
   assert.match(sw, /async function imageCacheFirst\(request\)/);
   assert.match(sw, /event\.respondWith\(imageCacheFirst\(request\)\)/);
   assert.match(js, /const IMAGE_PREFETCH_AHEAD_COUNT = 4/);
+  assert.match(js, /const WORD_ASSET_PREFETCH_COUNT = 12/);
+  assert.match(js, /const OPTIMIZED_IMAGE_PREFIX = 'assets\/images\/optimized\/'/);
+  assert.match(js, /function getOptimizedImageCandidate\(imageUrl\)/);
   assert.match(js, /function preloadWordImages\(words, startIndex = 0, count = IMAGE_PREFETCH_AHEAD_COUNT\)/);
+  assert.match(js, /function preloadWordAssets\(words, startIndex = 0, count = WORD_ASSET_PREFETCH_COUNT\)/);
+  assert.match(js, /CACHE_WORD_ASSETS/);
+  assert.match(sw, /async function cacheWordAssets\(urls\)/);
+  assert.match(sw, /CACHE_WORD_ASSETS/);
   assert.match(js, /previewWordImage\.fetchPriority = 'high'/);
-  assert.match(js, /preloadWordImages\(gameWords, currentPreviewIndex \+ 1\)/);
-  assert.match(js, /preloadWordImages\(gameWords, currentWordIndex \+ 1\)/);
+  assert.match(js, /preloadWordAssets\(gameWords, currentPreviewIndex \+ 1\)/);
+  assert.match(js, /preloadWordAssets\(gameWords, currentWordIndex \+ 1\)/);
 });

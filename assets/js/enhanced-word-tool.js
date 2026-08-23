@@ -143,6 +143,8 @@
         const GAME_WRONG_FEEDBACK_HOLD_MS = 1300;
         const CELEBRATION_MESSAGE_HOLD_MS = 2400;
         const IMAGE_PREFETCH_AHEAD_COUNT = 4;
+        const WORD_ASSET_PREFETCH_COUNT = 12;
+        const OPTIMIZED_IMAGE_PREFIX = 'assets/images/optimized/';
         const TTS_WORD_RATE = 0.84;
         const TTS_PHRASE_RATE = 0.86;
         const TTS_SENTENCE_RATE = 0.92;
@@ -1237,6 +1239,24 @@
             return shouldUseIllustration(imageUrl) ? '' : imageUrl;
         }
 
+        function getOptimizedImageCandidate(imageUrl) {
+            const normalizedUrl = String(imageUrl || '').trim();
+            if (!normalizedUrl || /^(https?:|data:|blob:|file:)/i.test(normalizedUrl) || normalizedUrl.startsWith('/')) {
+                return '';
+            }
+
+            let relativePath = normalizedUrl.replace(/^\.\//, '');
+            if (/^6年级[上下]\//.test(relativePath)) {
+                relativePath = `六年级单词图片/${relativePath}`;
+            }
+
+            if (!relativePath.startsWith('六年级单词图片/') || !/\.(?:png|jpg|jpeg)$/i.test(relativePath)) {
+                return '';
+            }
+
+            return `${OPTIMIZED_IMAGE_PREFIX}${relativePath.replace(/\.(?:png|jpg|jpeg)$/i, '.webp')}`;
+        }
+
         function getWordImageCandidates(word) {
             const imageUrl = resolveWordImage(word);
             if (!imageUrl) {
@@ -1248,7 +1268,8 @@
                 return [normalizedUrl];
             }
 
-            const candidates = [normalizedUrl];
+            const optimizedCandidate = getOptimizedImageCandidate(normalizedUrl);
+            const candidates = optimizedCandidate ? [optimizedCandidate, normalizedUrl] : [normalizedUrl];
             const withoutLeadingDot = normalizedUrl.replace(/^\.\//, '');
             if (withoutLeadingDot !== normalizedUrl) {
                 candidates.push(withoutLeadingDot);
@@ -1261,6 +1282,45 @@
             }
 
             return [...new Set(candidates)];
+        }
+
+        function canPrefetchUrl(url) {
+            const text = String(url || '').trim();
+            if (!text || /^(data:|blob:|file:)/i.test(text)) return false;
+            if (/^https?:\/\//i.test(text)) {
+                try {
+                    return new URL(text).origin === window.location.origin;
+                } catch (error) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function preloadUrlsWithServiceWorker(urls) {
+            const uniqueUrls = [...new Set((urls || []).filter(canPrefetchUrl))];
+            if (uniqueUrls.length === 0 || !('serviceWorker' in navigator)) return;
+
+            const message = { type: 'CACHE_WORD_ASSETS', urls: uniqueUrls };
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage(message);
+                return;
+            }
+
+            navigator.serviceWorker.ready
+                .then((registration) => {
+                    const worker = registration.active || registration.waiting || registration.installing;
+                    worker?.postMessage(message);
+                })
+                .catch(() => {});
+        }
+
+        function getWordAssetUrls(word) {
+            return [
+                ...getWordImageCandidates(word),
+                getAudioUrlForWord(word),
+                getSentenceAudioUrlForWord(word)
+            ].filter(Boolean);
         }
 
         function loadImageWithFallback(imgEl, candidates, onMissing) {
@@ -1297,9 +1357,27 @@
             if (!Array.isArray(words) || words.length === 0) return;
             const start = Math.max(0, Number(startIndex) || 0);
             const end = Math.min(words.length, start + Math.max(1, Number(count) || IMAGE_PREFETCH_AHEAD_COUNT));
+            const urls = [];
             for (let index = start; index < end; index++) {
-                preloadImageCandidates(getWordImageCandidates(words[index]));
+                const imageCandidates = getWordImageCandidates(words[index]);
+                urls.push(...imageCandidates);
+                preloadImageCandidates(imageCandidates);
             }
+            preloadUrlsWithServiceWorker(urls);
+        }
+
+        function preloadWordAssets(words, startIndex = 0, count = WORD_ASSET_PREFETCH_COUNT) {
+            if (!Array.isArray(words) || words.length === 0) return;
+            const start = Math.max(0, Number(startIndex) || 0);
+            const end = Math.min(words.length, start + Math.max(1, Number(count) || WORD_ASSET_PREFETCH_COUNT));
+            const urls = [];
+            for (let index = start; index < end; index++) {
+                const word = words[index];
+                const imageCandidates = getWordImageCandidates(word);
+                preloadImageCandidates(imageCandidates);
+                urls.push(...getWordAssetUrls(word));
+            }
+            preloadUrlsWithServiceWorker(urls);
         }
 
         function normalizeWordForGame(text) {
@@ -2962,6 +3040,7 @@
                 
                 // 洗牌算法确保无重复
                 gameWords = window.GameCore.selectWords(gradeWords, availableWords);
+                preloadWordAssets(gameWords, 0, Math.min(WORD_ASSET_PREFETCH_COUNT, gameWords.length));
             }
 
             wordAnswerRecords = gameWords.map(() => ({
@@ -3110,7 +3189,7 @@
             previewWordCount.textContent = `${currentPreviewIndex + 1}/${gameWords.length}`;
             setPreviewStep('study');
             schedulePreviewWordPronunciation(word, currentPreviewIndex);
-            preloadWordImages(gameWords, currentPreviewIndex + 1);
+            preloadWordAssets(gameWords, currentPreviewIndex + 1);
 
             console.log('显示单词:', word.english, '索引:', currentPreviewIndex, '图片链接:', imageUrl);
         }
@@ -3780,7 +3859,7 @@
             document.getElementById('hint').classList.add('hidden');
             renderActiveQuestionInput(currentWord);
             updateMascotMessage('ready');
-            preloadWordImages(gameWords, currentWordIndex + 1);
+            preloadWordAssets(gameWords, currentWordIndex + 1);
 
             if (activeQuestion.type === 'audio_to_english' || activeQuestion.type === 'spelling') {
                 setTimeout(() => {

@@ -96,6 +96,19 @@ npm run generate-audio -- --grade=grade6 --difficulty=easy --limit=10
 npm run generate-audio -- --word=taste --force
 ```
 
+## 压缩手机端图片
+
+六年级原始图片较大，手机首次打开会慢。项目会优先读取
+`assets/images/optimized/` 下的 WebP 压缩图，失败时再回退到原图。
+
+新增或替换图片后，运行：
+
+```bash
+npm run optimize-images
+```
+
+当前六年级图片已从约 276MB 压缩到约 11MB，并且学习时会提前缓存当前批次的图片和本地音频，提升手机 PWA 的二次打开速度。
+
 ## 文档
 
 - 功能与技术盘点：`docs/项目功能技术盘点.md`

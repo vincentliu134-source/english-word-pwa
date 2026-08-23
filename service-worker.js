@@ -1,4 +1,4 @@
-const CACHE_VERSION = "word-tool-pwa-20260822-brand-starword-v45";
+const CACHE_VERSION = "word-tool-pwa-20260823-fast-assets-v46";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;
@@ -100,6 +100,25 @@ async function imageCacheFirst(request) {
   }
 }
 
+async function cacheWordAssets(urls) {
+  if (!Array.isArray(urls) || urls.length === 0) return;
+  const cache = await caches.open(IMAGE_CACHE);
+  const uniqueUrls = [...new Set(urls)]
+    .filter((url) => typeof url === "string" && url.trim())
+    .slice(0, 80);
+
+  await Promise.allSettled(uniqueUrls.map(async (url) => {
+    const request = new Request(url);
+    const cached = await cache.match(request, { ignoreSearch: true });
+    if (cached) return;
+
+    const response = await fetch(request);
+    if (response && (response.ok || response.type === "opaque")) {
+      await cache.put(request, response.clone());
+    }
+  }));
+}
+
 async function networkFirstHtml(request) {
   try {
     const response = await fetch(request);
@@ -126,5 +145,12 @@ self.addEventListener("fetch", (event) => {
 
   if (shouldRuntimeCache(request)) {
     event.respondWith(cacheFirst(request));
+  }
+});
+
+self.addEventListener("message", (event) => {
+  const data = event.data || {};
+  if (data.type === "CACHE_WORD_ASSETS") {
+    event.waitUntil(cacheWordAssets(data.urls || []));
   }
 });

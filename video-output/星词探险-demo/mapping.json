@@ -1,13 +1,12 @@
 [
-  ["00:00:00,000", "01-home.png"],
-  ["00:00:54,762", "01-home.png"],
-  ["00:01:02,862", "02-learn-picture.png"],
-  ["00:01:10,725", "03-learn-listen-memory.png"],
-  ["00:01:39,312", "04-learn-active-recall.png"],
-  ["00:01:47,062", "05-challenge.png"],
-  ["00:02:13,850", "07-data.png"],
-  ["00:02:32,025", "06-reading-story.png"],
-  ["00:02:53,450", "07-data.png"],
-  ["00:03:07,500", "08-closing-home.png"],
-  ["00:03:29,352", "08-closing-home.png"]
+  ["00:00:00,100", "01-home.png"],
+  ["00:00:18,350", "02-learn-picture.png"],
+  ["00:00:24,162", "03-learn-listen-memory.png"],
+  ["00:00:36,337", "04-learn-active-recall.png"],
+  ["00:00:45,200", "05-challenge.png"],
+  ["00:01:03,450", "07-data.png"],
+  ["00:01:15,025", "06-reading-story.png"],
+  ["00:01:25,987", "07-data.png"],
+  ["00:01:33,562", "08-closing-home.png"],
+  ["00:02:11,237", "08-closing-home.png"]
 ]
