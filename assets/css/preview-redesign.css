@@ -3444,3 +3444,170 @@ html body.mode-reading #reading-screen .reading-progress-summary {
     min-width: max-content !important;
   }
 }
+
+/* MOBILE-GAME-HEADER-V32: on phones the challenge header now follows the same
+   rhythm as the card-learning header: icon + title + home on the first row,
+   compact status chips below. This keeps the top from turning into a loose
+   statistics panel. */
+@media (max-width: 720px) {
+  body.mode-game #game-screen .game-header {
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    border-radius: 22px !important;
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) auto auto !important;
+    grid-template-areas:
+      "mark title more home"
+      "score timer progress progress" !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    border: 1px solid rgba(226, 232, 240, 0.82) !important;
+    box-shadow: 0 12px 30px rgba(30, 48, 74, 0.08) !important;
+  }
+
+  body.mode-game #game-screen .game-header::before {
+    content: "单词挑战";
+    grid-area: title;
+    min-width: 0;
+    color: #f45c3c;
+    font-size: clamp(1.25rem, 5.8vw, 1.7rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    white-space: nowrap;
+  }
+
+  body.mode-game #game-screen .game-header .app-mark {
+    grid-area: mark !important;
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 14px !important;
+    font-size: 1.02rem !important;
+    justify-self: start !important;
+    align-self: center !important;
+  }
+
+  body.mode-game #game-screen .game-more-actions {
+    grid-area: more !important;
+    width: auto !important;
+    justify-self: end !important;
+    align-self: center !important;
+  }
+
+  body.mode-game #game-screen .game-more-actions summary,
+  body.mode-game #game-screen .home-btn {
+    width: auto !important;
+    min-height: 38px !important;
+    padding: 0 14px !important;
+    border-radius: 16px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    font-size: 0.88rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  body.mode-game #game-screen .home-btn {
+    grid-area: home !important;
+    min-width: 76px !important;
+    justify-self: end !important;
+  }
+
+  body.mode-game #game-screen .score-box,
+  body.mode-game #game-screen .timer-box,
+  body.mode-game #game-screen .game-progress-chip {
+    min-width: 0 !important;
+    width: 100% !important;
+    min-height: 36px !important;
+    padding: 0 9px !important;
+    border-radius: 15px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    color: #17304a !important;
+    background: rgba(248, 250, 252, 0.92) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    box-shadow: none !important;
+    font-size: 0.78rem !important;
+    font-weight: 850 !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+
+  body.mode-game #game-screen .score-box {
+    grid-area: score !important;
+  }
+
+  body.mode-game #game-screen .timer-box {
+    grid-area: timer !important;
+  }
+
+  body.mode-game #game-screen .game-progress-chip {
+    grid-area: progress !important;
+  }
+
+  body.mode-game #game-screen .score-box strong,
+  body.mode-game #game-screen .timer-box strong {
+    font-size: 0.95rem !important;
+    font-weight: 950 !important;
+  }
+
+  body.mode-game #game-screen .game-review-bar {
+    min-height: 46px !important;
+    padding: 7px 8px 7px 12px !important;
+    border-radius: 20px !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  body.mode-game #game-screen .today-review-summary {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 0.84rem !important;
+    text-align: left !important;
+  }
+}
+
+@media (max-width: 420px) {
+  body.mode-game #game-screen .game-header {
+    grid-template-columns: 40px minmax(0, 1fr) auto auto !important;
+    grid-template-areas:
+      "mark title more home"
+      "score timer progress progress" !important;
+    gap: 7px !important;
+  }
+
+  body.mode-game #game-screen .game-header .app-mark {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  body.mode-game #game-screen .game-header::before {
+    font-size: clamp(1.18rem, 5.7vw, 1.52rem) !important;
+  }
+
+  body.mode-game #game-screen .game-more-actions summary {
+    min-width: 58px !important;
+    padding-inline: 10px !important;
+  }
+
+  body.mode-game #game-screen .home-btn {
+    min-width: 70px !important;
+    padding-inline: 12px !important;
+  }
+
+  body.mode-game #game-screen .score-box,
+  body.mode-game #game-screen .timer-box,
+  body.mode-game #game-screen .game-progress-chip {
+    min-height: 34px !important;
+    font-size: 0.74rem !important;
+  }
+}
