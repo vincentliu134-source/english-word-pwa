@@ -1,4 +1,4 @@
-const CACHE_VERSION = "word-tool-pwa-20260824-mobile-game-v48";
+const CACHE_VERSION = "word-tool-pwa-20260824-mobile-options-v49";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;

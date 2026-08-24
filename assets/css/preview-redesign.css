@@ -3611,3 +3611,30 @@ html body.mode-reading #reading-screen .reading-progress-summary {
     font-size: 0.74rem !important;
   }
 }
+
+/* MOBILE-GAME-OPTIONS-V33: single-column challenge options are centered and
+   evenly sized on phones, instead of filling a left-biased content column. */
+@media (max-width: 720px) {
+  body.mode-game #game-screen .active-recall-options {
+    width: min(100%, 360px) !important;
+    max-width: 360px !important;
+    margin: 6px auto 0 !important;
+    justify-self: center !important;
+    align-self: center !important;
+    justify-items: stretch !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  body.mode-game #game-screen .active-recall-option {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-self: center !important;
+  }
+}
+
+@media (max-width: 420px) {
+  body.mode-game #game-screen .active-recall-options {
+    width: min(100%, 330px) !important;
+    max-width: 330px !important;
+  }
+}
