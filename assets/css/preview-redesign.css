@@ -3638,3 +3638,87 @@ html body.mode-reading #reading-screen .reading-progress-summary {
     max-width: 330px !important;
   }
 }
+
+/* MOBILE-GAME-BALANCED-V34: use wrapping flex instead of a fixed grid on the
+   phone challenge header. The score chip is no longer squeezed into the icon
+   column, and English-to-Chinese options sit on the card centerline. */
+@media (max-width: 720px) {
+  body.mode-game #game-screen .game-header {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    column-gap: 8px !important;
+    row-gap: 8px !important;
+    padding: 10px !important;
+  }
+
+  body.mode-game #game-screen .game-header .app-mark {
+    order: 1 !important;
+    flex: 0 0 42px !important;
+  }
+
+  body.mode-game #game-screen .game-header::before {
+    order: 2 !important;
+    flex: 1 1 118px !important;
+  }
+
+  body.mode-game #game-screen .game-more-actions {
+    order: 3 !important;
+    flex: 0 0 66px !important;
+  }
+
+  body.mode-game #game-screen .home-btn {
+    order: 4 !important;
+    flex: 0 0 76px !important;
+  }
+
+  body.mode-game #game-screen .score-box,
+  body.mode-game #game-screen .timer-box,
+  body.mode-game #game-screen .game-progress-chip {
+    flex: 1 1 calc((100% - 16px) / 3) !important;
+    max-width: calc((100% - 16px) / 3) !important;
+  }
+
+  body.mode-game #game-screen .score-box {
+    order: 5 !important;
+  }
+
+  body.mode-game #game-screen .timer-box {
+    order: 6 !important;
+  }
+
+  body.mode-game #game-screen .game-progress-chip {
+    order: 7 !important;
+  }
+
+  body.mode-game #game-screen .game-card {
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  body.mode-game #game-screen .active-recall-options {
+    width: min(100%, 340px) !important;
+    max-width: 340px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    align-self: center !important;
+    justify-self: center !important;
+  }
+}
+
+@media (max-width: 420px) {
+  body.mode-game #game-screen .game-header::before {
+    flex-basis: 104px !important;
+  }
+
+  body.mode-game #game-screen .game-more-actions,
+  body.mode-game #game-screen .home-btn {
+    flex-basis: 64px !important;
+  }
+
+  body.mode-game #game-screen .active-recall-options {
+    width: min(100%, 300px) !important;
+    max-width: 300px !important;
+  }
+}

@@ -149,11 +149,14 @@ test("手机端使用安全区视口和专用紧凑布局", () => {
   assert.match(css, /MOBILE-POLISH-V31/);
   assert.match(css, /MOBILE-GAME-HEADER-V32/);
   assert.match(css, /MOBILE-GAME-OPTIONS-V33/);
+  assert.match(css, /MOBILE-GAME-BALANCED-V34/);
   assert.match(css, /@media \(max-width: 720px\)[\s\S]*#app-header \{[\s\S]*padding-top: max\(env\(safe-area-inset-top\), 10px\)/);
   assert.match(css, /body\.mode-game #game-screen \.game-header \{[\s\S]*grid-template-areas:[\s\S]*"mark title more home"[\s\S]*"score timer progress progress"/);
   assert.match(css, /body\.mode-game #game-screen \.game-header::before \{[\s\S]*content: "单词挑战"/);
   assert.match(css, /body\.mode-game #game-screen \.game-header \.app-mark \{[\s\S]*grid-area: mark !important/);
   assert.match(css, /body\.mode-game #game-screen \.active-recall-options \{[\s\S]*width: min\(100%, 360px\) !important[\s\S]*margin: 6px auto 0 !important/);
+  assert.match(css, /body\.mode-game #game-screen \.score-box,[\s\S]*body\.mode-game #game-screen \.game-progress-chip \{[\s\S]*flex: 1 1 calc\(\(100% - 16px\) \/ 3\) !important/);
+  assert.match(css, /body\.mode-game #game-screen \.active-recall-options \{[\s\S]*width: min\(100%, 340px\) !important[\s\S]*align-self: center !important/);
   assert.match(css, /body\.mode-reading #reading-screen \.reading-content \{[\s\S]*grid-template-columns: 1fr !important/);
 });
 
@@ -387,7 +390,7 @@ test("听读与记忆的四个选项使用接近一致的卡片高度", () => {
   const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
   const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
 
-  assert.match(html, /preview-redesign\.css\?v=20260824-mobile-options-v33/);
+  assert.match(html, /preview-redesign\.css\?v=20260825-mobile-game-balanced-v34/);
   assert.match(css, /FINAL-HELPER-EQUAL-CARDS/);
   assert.match(css, /\.preview-core-audio,[\s\S]*\.preview-core-example,[\s\S]*\.helper-card \{[\s\S]*min-height: clamp\(96px, 12vh, 124px\)/);
   assert.match(css, /\.helper-card \{[\s\S]*height: 100% !important[\s\S]*justify-content: center/);
@@ -415,7 +418,7 @@ test("学习、游戏和阅读页使用同一宽屏画布并保留橙色横幅",
   assert.match(css, /html body\.mode-preview #preview-screen,[\s\S]*html body\.mode-reading #reading-screen \{[\s\S]*max-width: none !important/);
   assert.match(css, /html body\.mode-preview #preview-screen #single-word-card[\s\S]*min-height: clamp\(560px, 68vh, 860px\)/);
   assert.match(css, /html body\.mode-game #game-screen \.game-card,[\s\S]*html body\.mode-reading #reading-screen \.reading-content \{[\s\S]*min-height: clamp\(560px, 66vh, 820px\)/);
-  assert.match(sw, /word-tool-pwa-20260824-mobile-options-v49/);
+  assert.match(sw, /word-tool-pwa-20260825-mobile-game-balanced-v50/);
 });
 
 test("背单词页采用一屏学习面板，顶部、步骤、内容和底部操作同时可见", () => {
@@ -479,7 +482,7 @@ test("整轮单词学完后提示进入由刚学词组成的简单阅读", () =>
   const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
 
   assert.match(html, /story-core\.js\?v=20260816-home-names-helper-v17/);
-  assert.match(html, /enhanced-word-tool\.js\?v=20260822-reading-keyword-v29/);
+  assert.match(html, /enhanced-word-tool\.js\?v=20260825-vivienne-voice-v30/);
   assert.match(js, /function getCurrentLearningRoundWords\(\) \{[\s\S]*completedWords\.length >= 2 \? completedWords : gameWords\.filter\(Boolean\)/);
   assert.match(js, /canReadStory[\s\S]*gameWords\.every\(\(item, index\) => !item \|\| isPreviewWordLearned\(index\)\)/);
   assert.match(js, /读刚学单词小故事/);
@@ -505,10 +508,13 @@ test("浏览器本地 TTS 会优选自然英文声音并按单词句子调节节
   const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
   const js = fs.readFileSync(path.join(root, "assets/js/enhanced-word-tool.js"), "utf8");
 
-  assert.match(html, /enhanced-word-tool\.js\?v=20260822-reading-keyword-v29/);
+  assert.match(html, /enhanced-word-tool\.js\?v=20260825-vivienne-voice-v30/);
   assert.match(js, /const TTS_WORD_RATE = 0\.84/);
   assert.match(js, /const TTS_SENTENCE_RATE = 0\.92/);
   assert.match(js, /function scoreEnglishVoice\(voice, mode = 'sentence'\)/);
+  assert.match(js, /const isVivienne = \/vivienne\/\.test\(name\)/);
+  assert.match(js, /if \(isVivienne\) score \+= 1000/);
+  assert.match(js, /return lang\.startsWith\('en'\) \|\| \/vivienne\/\.test\(name\)/);
   assert.match(js, /samantha\|ava\|allison\|susan\|victoria\|karen\|serena\|moira/);
   assert.match(js, /function splitSpeechSegments\(text, mode = 'sentence'\)/);
   assert.match(js, /window\.speechSynthesis\.onvoiceschanged = \(\) => \{/);

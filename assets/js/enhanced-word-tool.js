@@ -5351,12 +5351,16 @@
         function scoreEnglishVoice(voice, mode = 'sentence') {
             const lang = String(voice.lang || '').toLowerCase();
             const name = String(voice.name || '').toLowerCase();
+            const isVivienne = /vivienne/.test(name);
             let score = 0;
 
+            if (isVivienne) score += 1000;
             if (lang === 'en-us') score += 80;
             else if (lang.startsWith('en-')) score += 60;
+            else if (isVivienne) score += 60;
             else return -1000;
 
+            if (/multilingual/.test(name)) score += 80;
             if (/samantha|ava|allison|susan|victoria|karen|serena|moira/.test(name)) score += 40;
             if (/google.*english|microsoft.*(jenny|aria|guy|zira|david)|natural|neural|premium/.test(name)) score += 34;
             if (/female|woman/.test(name)) score += mode === 'sentence' || mode === 'story' ? 10 : 4;
@@ -5373,7 +5377,11 @@
             const voices = window.speechSynthesis.getVoices() || [];
             if (!voices.length) return null;
             const preferredVoice = voices
-                .filter(voice => String(voice.lang || '').toLowerCase().startsWith('en'))
+                .filter(voice => {
+                    const lang = String(voice.lang || '').toLowerCase();
+                    const name = String(voice.name || '').toLowerCase();
+                    return lang.startsWith('en') || /vivienne/.test(name);
+                })
                 .sort((a, b) => scoreEnglishVoice(b, mode) - scoreEnglishVoice(a, mode))[0] || null;
             preferredEnglishVoiceCache[mode] = preferredVoice;
             return preferredVoice;
