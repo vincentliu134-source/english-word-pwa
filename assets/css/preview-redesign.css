@@ -3722,3 +3722,283 @@ html body.mode-reading #reading-screen .reading-progress-summary {
     max-width: 300px !important;
   }
 }
+
+/* MOBILE-GAME-CARDLIKE-V35: final mobile challenge layout. Earlier phone
+   rules used mixed grid/flex behavior, which made the transition header split
+   into uneven tall blocks on real iPhone browsers. This final layer mirrors
+   the compact "单词学习" header: title row first, three equal status chips
+   second, then a centered challenge card. */
+@media (max-width: 720px) {
+  html body.mode-game main.container {
+    width: calc(100vw - 18px) !important;
+    max-width: calc(100vw - 18px) !important;
+    padding-top: 10px !important;
+    padding-bottom: max(14px, env(safe-area-inset-bottom)) !important;
+    overflow: visible !important;
+  }
+
+  html body.mode-game #game-screen:not(.screen-hidden) {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body.mode-game #game-screen .game-header {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    grid-template-areas:
+      "mark title title title more home"
+      "score score timer timer progress progress" !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    border-radius: 22px !important;
+    overflow: visible !important;
+  }
+
+  html body.mode-game #game-screen .game-header .app-mark {
+    grid-area: mark !important;
+    order: initial !important;
+    flex: none !important;
+    justify-self: start !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+  }
+
+  html body.mode-game #game-screen .game-header::before {
+    content: "单词挑战";
+    grid-area: title !important;
+    order: initial !important;
+    flex: none !important;
+    min-width: 0 !important;
+    align-self: center !important;
+    justify-self: start !important;
+    color: #f45b3f !important;
+    font-size: clamp(1.18rem, 6vw, 1.55rem) !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html body.mode-game #game-screen .game-more-actions {
+    grid-area: more !important;
+    order: initial !important;
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+    margin: 0 !important;
+    position: relative !important;
+  }
+
+  html body.mode-game #game-screen .home-btn {
+    grid-area: home !important;
+    order: initial !important;
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+    margin: 0 !important;
+  }
+
+  html body.mode-game #game-screen .game-more-actions summary,
+  html body.mode-game #game-screen .home-btn {
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    padding: 0 6px !important;
+    border-radius: 15px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    font-size: 0.8rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html body.mode-game #game-screen .score-box {
+    grid-area: score !important;
+  }
+
+  html body.mode-game #game-screen .timer-box {
+    grid-area: timer !important;
+  }
+
+  html body.mode-game #game-screen .game-progress-chip {
+    grid-area: progress !important;
+  }
+
+  html body.mode-game #game-screen .score-box,
+  html body.mode-game #game-screen .timer-box,
+  html body.mode-game #game-screen .game-progress-chip {
+    order: initial !important;
+    flex: none !important;
+    align-self: stretch !important;
+    justify-self: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    border-radius: 15px !important;
+    aspect-ratio: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    color: #17304a !important;
+    background: rgba(248, 250, 252, 0.94) !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    box-shadow: none !important;
+    font-size: 0.76rem !important;
+    font-weight: 850 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html body.mode-game #game-screen .score-box strong,
+  html body.mode-game #game-screen .timer-box strong {
+    font-size: 0.92rem !important;
+    font-weight: 950 !important;
+  }
+
+  html body.mode-game #game-screen .game-review-bar {
+    width: 100% !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    padding: 7px 8px 7px 12px !important;
+    border-radius: 20px !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+  }
+
+  html body.mode-game #game-screen .today-review-summary {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 0.82rem !important;
+    line-height: 1 !important;
+    text-align: left !important;
+  }
+
+  html body.mode-game #game-screen .game-card {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 22px 18px 24px !important;
+    border-radius: 24px !important;
+    align-items: center !important;
+    text-align: center !important;
+    overflow: visible !important;
+  }
+
+  html body.mode-game #game-screen .game-card h2,
+  html body.mode-game #game-screen #active-recall-title {
+    margin-top: 0 !important;
+  }
+
+  html body.mode-game #game-screen .active-recall-word {
+    text-align: center !important;
+    max-width: 100% !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  html body.mode-game #game-screen .active-recall-options {
+    width: min(100%, 340px) !important;
+    max-width: 340px !important;
+    margin: 8px auto 0 !important;
+    align-self: center !important;
+    justify-self: center !important;
+    justify-items: stretch !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  html body.mode-game #game-screen .active-recall-option {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 54px !important;
+    justify-self: stretch !important;
+  }
+}
+
+@media (max-width: 420px) {
+  html body.mode-game main.container {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    padding-top: 8px !important;
+  }
+
+  html body.mode-game #game-screen:not(.screen-hidden) {
+    gap: 8px !important;
+  }
+
+  html body.mode-game #game-screen .game-header {
+    gap: 7px !important;
+    padding: 9px !important;
+    border-radius: 21px !important;
+  }
+
+  html body.mode-game #game-screen .game-header .app-mark {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  html body.mode-game #game-screen .game-header::before {
+    font-size: clamp(1.12rem, 5.7vw, 1.38rem) !important;
+  }
+
+  html body.mode-game #game-screen .game-more-actions summary,
+  html body.mode-game #game-screen .home-btn {
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    padding: 0 5px !important;
+    font-size: 0.75rem !important;
+  }
+
+  html body.mode-game #game-screen .score-box,
+  html body.mode-game #game-screen .timer-box,
+  html body.mode-game #game-screen .game-progress-chip {
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    padding: 0 6px !important;
+    font-size: 0.72rem !important;
+  }
+
+  html body.mode-game #game-screen .game-card {
+    padding: 20px 14px 22px !important;
+  }
+
+  html body.mode-game #game-screen .active-recall-options {
+    width: min(100%, 320px) !important;
+    max-width: 320px !important;
+  }
+}
