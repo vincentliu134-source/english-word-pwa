@@ -4098,3 +4098,17 @@ html body.mode-reading #reading-screen .reading-progress-summary {
     max-width: 340px !important;
   }
 }
+
+/* FINAL-GAME-HIDDEN-STATE: the phone centering rules above intentionally set
+   display with !important, so challenge widgets need an equally explicit hide
+   state when switching from spelling back to choice questions. */
+html body.mode-game #game-screen .active-recall-options.hidden,
+html body.mode-game #game-screen .answer-slots.hidden,
+html body.mode-game #game-screen .letter-bank.hidden,
+html body.mode-game #game-screen .letter-action-row.hidden,
+html body.mode-game #game-screen #submit-btn.hidden,
+html body.mode-game #game-screen #hint.hidden,
+html body.mode-game #game-screen #feedback.hidden,
+html body.mode-game #game-screen #answer-record.hidden {
+  display: none !important;
+}

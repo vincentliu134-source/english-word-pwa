@@ -336,6 +336,7 @@
         const questionHelperEl = document.getElementById('question-helper');
         const activeRecallOptionsEl = document.getElementById('active-recall-options');
         const letterGameInstructionEl = document.getElementById('letter-game-instruction');
+        const letterActionRowEl = document.querySelector('#game-screen .letter-action-row');
         const removeLetterBtn = document.getElementById('remove-letter-btn');
         const clearAnswerBtn = document.getElementById('clear-answer-btn');
         const shuffleLettersBtn = document.getElementById('shuffle-letters-btn');
@@ -3091,7 +3092,7 @@
             updateWordStarHud();
             updateTimerDisplay();
             document.getElementById('feedback').classList.add('hidden');
-            document.getElementById('hint').classList.add('hidden');
+            hideChallengeHint();
             document.getElementById('timer').classList.remove('text-danger');
             answerRecordEl.classList.add('hidden');
             updateProgressDisplay();
@@ -3891,7 +3892,7 @@
             document.getElementById('chinese-word').textContent = activeQuestion.prompt;
             document.getElementById('word-count').textContent = `进度: ${currentWordIndex + 1}/${gameWords.length}`;
             document.getElementById('feedback').classList.add('hidden');
-            document.getElementById('hint').classList.add('hidden');
+            hideChallengeHint();
             renderActiveQuestionInput(currentWord);
             updateMascotMessage('ready');
             preloadWordAssets(gameWords, currentWordIndex + 1, 2, { defer: true, delay: 500 });
@@ -3916,21 +3917,29 @@
         }
 
         function renderActiveQuestionInput(currentWord) {
+            const isSpelling = isSpellingQuestion();
             activeRecallOptionsEl.innerHTML = '';
-            activeRecallOptionsEl.classList.toggle('hidden', isSpellingQuestion());
-            answerSlotsEl.classList.toggle('hidden', !isSpellingQuestion());
-            letterBankEl.classList.toggle('hidden', !isSpellingQuestion());
-            removeLetterBtn.classList.toggle('hidden', !isSpellingQuestion());
-            clearAnswerBtn.classList.toggle('hidden', !isSpellingQuestion());
-            shuffleLettersBtn.classList.toggle('hidden', !isSpellingQuestion());
-            document.getElementById('submit-btn').classList.toggle('hidden', !isSpellingQuestion());
+            activeRecallOptionsEl.classList.toggle('hidden', isSpelling);
+            answerSlotsEl.classList.toggle('hidden', !isSpelling);
+            letterBankEl.classList.toggle('hidden', !isSpelling);
+            letterActionRowEl?.classList.toggle('hidden', !isSpelling);
+            removeLetterBtn.classList.toggle('hidden', !isSpelling);
+            clearAnswerBtn.classList.toggle('hidden', !isSpelling);
+            shuffleLettersBtn.classList.toggle('hidden', !isSpelling);
+            document.getElementById('submit-btn').classList.toggle('hidden', !isSpelling);
 
-            if (isSpellingQuestion()) {
+            if (isSpelling) {
                 letterGameInstructionEl.textContent = '拖到任意空格，或先点空格再选字母。';
                 buildLetterBank(currentWord);
                 return;
             }
 
+            answerSlotsEl.innerHTML = '';
+            letterBankEl.innerHTML = '';
+            selectedLetterIndices = [];
+            currentLetterBank = [];
+            currentDragSource = null;
+            selectedTargetSlot = null;
             letterGameInstructionEl.textContent = '先在脑中回忆答案，再点击选项。';
             activeQuestion.options.forEach(option => {
                 const button = document.createElement('button');
@@ -3949,6 +3958,7 @@
             }
             const currentWord = gameWords[currentWordIndex];
             const feedbackEl = document.getElementById('feedback');
+            hideChallengeHint();
             const userAnswer = normalizeWordForGame(getSelectedAnswer());
             const correctAnswer = normalizeWordForGame(currentWord.english);
             const responseTimeMs = questionStartedAt ? Date.now() - questionStartedAt : 0;
@@ -4082,6 +4092,12 @@
                 updateProgressDisplay();
                 showCurrentWord();
             }, isCorrect ? GAME_PRAISE_HOLD_MS : GAME_WRONG_FEEDBACK_HOLD_MS);
+        }
+
+        function hideChallengeHint() {
+            const hintEl = document.getElementById('hint');
+            hintEl.textContent = '';
+            hintEl.classList.add('hidden');
         }
 
         // 添加到已完成列表

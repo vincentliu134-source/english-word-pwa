@@ -552,6 +552,20 @@ test("挑战页隐藏底部已完成单词条，卡片撑到底且不留大空�
   assert.match(js, /function addToCompletedList\(word, isCorrect\) \{[\s\S]*不再在底部堆叠已完成单词[\s\S]*return;/);
 });
 
+test("挑战页从拼写题切回选择题时彻底隐藏拼写控件", () => {
+  const js = fs.readFileSync(path.join(root, "assets/js/enhanced-word-tool.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
+
+  assert.match(js, /const letterActionRowEl = document\.querySelector\('#game-screen \.letter-action-row'\)/);
+  assert.match(js, /const isSpelling = isSpellingQuestion\(\)/);
+  assert.match(js, /letterActionRowEl\?\.classList\.toggle\('hidden', !isSpelling\)/);
+  assert.match(js, /answerSlotsEl\.innerHTML = '';\s*letterBankEl\.innerHTML = '';\s*selectedLetterIndices = \[\];\s*currentLetterBank = \[\]/);
+  assert.match(js, /function hideChallengeHint\(\) \{[\s\S]*hintEl\.textContent = '';[\s\S]*hintEl\.classList\.add\('hidden'\)/);
+  assert.match(js, /function checkAnswer\(\) \{[\s\S]*const feedbackEl = document\.getElementById\('feedback'\);\s*hideChallengeHint\(\)/);
+  assert.match(css, /FINAL-GAME-HIDDEN-STATE/);
+  assert.match(css, /html body\.mode-game #game-screen \.answer-slots\.hidden,[\s\S]*html body\.mode-game #game-screen \.letter-bank\.hidden,[\s\S]*html body\.mode-game #game-screen \.letter-action-row\.hidden,[\s\S]*display: none !important/);
+});
+
 test("阅读页有底部渐隐和全对庆祝效果", () => {
   const js = fs.readFileSync(path.join(root, "assets/js/enhanced-word-tool.js"), "utf8");
   const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
