@@ -1,4 +1,4 @@
-const CACHE_VERSION = "word-tool-pwa-20260825-mobile-game-cardlike-v51";
+const CACHE_VERSION = "word-tool-pwa-20260825-mobile-game-centerline-v52";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;

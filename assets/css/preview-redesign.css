@@ -4002,3 +4002,99 @@ html body.mode-reading #reading-screen .reading-progress-summary {
     max-width: 320px !important;
   }
 }
+
+/* MOBILE-GAME-CENTERLINE-V36-FINAL: last cascade layer for phone challenge cards. */
+@media (max-width: 720px) {
+  html body.mode-game #game-screen .game-card {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: center !important;
+    align-items: center !important;
+    align-content: center !important;
+    text-align: center !important;
+    padding: clamp(22px, 4vh, 30px) clamp(16px, 5vw, 24px) !important;
+    gap: clamp(10px, 1.6vh, 14px) !important;
+  }
+  html body.mode-game #game-screen .game-card > *,
+  html body.mode-game #game-screen #active-recall-title,
+  html body.mode-game #game-screen .question-cn,
+  html body.mode-game #game-screen #question-helper,
+  html body.mode-game #game-screen #game-pronounce-btn,
+  html body.mode-game #game-screen .active-recall-options,
+  html body.mode-game #game-screen .letter-game-instruction,
+  html body.mode-game #game-screen .answer-slots,
+  html body.mode-game #game-screen .letter-bank,
+  html body.mode-game #game-screen .letter-action-row,
+  html body.mode-game #game-screen #submit-btn,
+  html body.mode-game #game-screen #hint-btn,
+  html body.mode-game #game-screen #hint,
+  html body.mode-game #game-screen #feedback,
+  html body.mode-game #game-screen #answer-record {
+    justify-self: center !important;
+    align-self: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
+  }
+  html body.mode-game #game-screen #active-recall-title,
+  html body.mode-game #game-screen .question-cn,
+  html body.mode-game #game-screen .target-word,
+  html body.mode-game #game-screen .active-recall-word {
+    width: min(100%, 340px) !important;
+    max-width: 340px !important;
+    text-align: center !important;
+  }
+  html body.mode-game #game-screen #game-pronounce-btn.audio-main-btn {
+    width: fit-content !important;
+    min-width: 132px !important;
+    max-width: min(100%, 240px) !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+  }
+  html body.mode-game #game-screen .active-recall-options {
+    width: min(100%, 340px) !important;
+    max-width: 340px !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    justify-items: stretch !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  html body.mode-game #game-screen .active-recall-option {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-align: center !important;
+  }
+  html body.mode-game #game-screen .answer-slots,
+  html body.mode-game #game-screen .letter-bank {
+    width: min(100%, 340px) !important;
+    max-width: 340px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  html body.mode-game #game-screen .letter-action-row {
+    width: min(100%, 340px) !important;
+    max-width: 340px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  html body.mode-game #game-screen #submit-btn {
+    width: min(220px, 78%) !important;
+    max-width: 220px !important;
+    justify-content: center !important;
+  }
+  html body.mode-game #game-screen #hint-btn { width: fit-content !important; min-width: 88px !important; }
+  html body.mode-game #game-screen #hint,
+  html body.mode-game #game-screen #feedback,
+  html body.mode-game #game-screen #answer-record {
+    width: min(100%, 340px) !important;
+    max-width: 340px !important;
+  }
+}

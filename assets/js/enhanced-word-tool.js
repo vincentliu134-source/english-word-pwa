@@ -3542,6 +3542,9 @@
             if (isCorrect) {
                 previewRewardStreak += 1;
                 previewRewardStars += 1;
+                // Match the challenge/transition correct-answer cue so every
+                // learning surface gives the same audible confirmation.
+                playCelebrationSound();
                 awardWordStars(1, '学新词', word?.english || '');
                 const praises = ['太棒了！', '答对啦！', '很准确！', '记得真牢！'];
                 const praise = praises[(previewQuizIndex + previewQuizAnsweredCount) % praises.length];

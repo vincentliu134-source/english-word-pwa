@@ -151,6 +151,7 @@ test("手机端使用安全区视口和专用紧凑布局", () => {
   assert.match(css, /MOBILE-GAME-OPTIONS-V33/);
   assert.match(css, /MOBILE-GAME-BALANCED-V34/);
   assert.match(css, /MOBILE-GAME-CARDLIKE-V35/);
+  assert.match(css, /MOBILE-GAME-CENTERLINE-V36/);
   assert.match(css, /@media \(max-width: 720px\)[\s\S]*#app-header \{[\s\S]*padding-top: max\(env\(safe-area-inset-top\), 10px\)/);
   assert.match(css, /body\.mode-game #game-screen \.game-header \{[\s\S]*grid-template-areas:[\s\S]*"mark title more home"[\s\S]*"score timer progress progress"/);
   assert.match(css, /html body\.mode-game #game-screen \.game-header \{[\s\S]*grid-template-areas:[\s\S]*"mark title title title more home"[\s\S]*"score score timer timer progress progress"/);
@@ -393,7 +394,7 @@ test("听读与记忆的四个选项使用接近一致的卡片高度", () => {
   const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
   const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
 
-  assert.match(html, /preview-redesign\.css\?v=20260825-mobile-game-cardlike-v35/);
+  assert.match(html, /preview-redesign\.css\?v=20260825-mobile-game-centerline-v36/);
   assert.match(css, /FINAL-HELPER-EQUAL-CARDS/);
   assert.match(css, /\.preview-core-audio,[\s\S]*\.preview-core-example,[\s\S]*\.helper-card \{[\s\S]*min-height: clamp\(96px, 12vh, 124px\)/);
   assert.match(css, /\.helper-card \{[\s\S]*height: 100% !important[\s\S]*justify-content: center/);
@@ -421,7 +422,7 @@ test("学习、游戏和阅读页使用同一宽屏画布并保留橙色横幅",
   assert.match(css, /html body\.mode-preview #preview-screen,[\s\S]*html body\.mode-reading #reading-screen \{[\s\S]*max-width: none !important/);
   assert.match(css, /html body\.mode-preview #preview-screen #single-word-card[\s\S]*min-height: clamp\(560px, 68vh, 860px\)/);
   assert.match(css, /html body\.mode-game #game-screen \.game-card,[\s\S]*html body\.mode-reading #reading-screen \.reading-content \{[\s\S]*min-height: clamp\(560px, 66vh, 820px\)/);
-  assert.match(sw, /word-tool-pwa-20260825-mobile-game-cardlike-v51/);
+  assert.match(sw, /word-tool-pwa-20260825-mobile-game-centerline-v52/);
 });
 
 test("背单词页采用一屏学习面板，顶部、步骤、内容和底部操作同时可见", () => {
@@ -600,6 +601,7 @@ test("星词积分接入学新词、挑战和读故事，阅读页保持一屏�
   assert.match(js, /function showWordStarReward\(\{ amount, source, detail, title, titleUpgraded, streak, anchorEl = null \}\)/);
   assert.match(js, /function playWordStarCollectSound\(\)/);
   assert.match(js, /playWordStarCollectSound\(\)/);
+  assert.match(js, /function finishPreviewQuizAnswer[\s\S]*if \(isCorrect\) \{[\s\S]*playCelebrationSound\(\);[\s\S]*awardWordStars\(1, '学新词'/);
   assert.match(js, /function showWordStarUpgrade\(\{ title, source, detail, streak \}\)/);
   assert.match(js, /function toggleWordStarLevelPanel\(\)/);
   assert.match(js, /function renderWordStarLevelPanel\(options = \{\}\)/);
