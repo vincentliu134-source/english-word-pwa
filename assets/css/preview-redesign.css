@@ -4164,6 +4164,14 @@ html body.mode-game #game-screen #answer-record.hidden {
 
   #app-header .feedback-fab {
     width: 108px !important;
+    min-height: 42px !important;
+    padding: 0 9px !important;
+    color: #c96043 !important;
+    background: #fffaf3 !important;
+    border: 1.5px solid rgba(240, 95, 60, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 5px 12px -8px rgba(23, 50, 77, 0.72) !important;
+    font-weight: 900 !important;
   }
 
   #app-header #word-source-indicator {
@@ -4172,5 +4180,12 @@ html body.mode-game #game-screen #answer-record.hidden {
 
   #app-header .feedback-fab {
     display: inline-flex !important;
+  }
+
+  #app-header .feedback-fab:hover,
+  #app-header .feedback-fab:focus-visible {
+    color: #b94f35 !important;
+    background: #fff !important;
+    border-color: rgba(240, 95, 60, 0.46) !important;
   }
 }

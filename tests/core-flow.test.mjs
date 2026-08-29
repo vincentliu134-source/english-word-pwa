@@ -585,6 +585,7 @@ test("全局反馈入口接入 Google Form 和 Cloudflare Web Analytics", () => 
   assert.match(responsiveCss, /FINAL-HEADER-ACTION-ALIGNMENT/);
   assert.match(responsiveCss, /@media \(min-width: 721px\) and \(max-width: 1200px\) \{[\s\S]*\.word-star-meter \{[\s\S]*width: 100% !important;[\s\S]*min-width: 0 !important;/);
   assert.match(responsiveCss, /@media \(max-width: 720px\) \{[\s\S]*#app-header #word-source-indicator,[\s\S]*#app-header \.feedback-fab \{[\s\S]*width: 124px !important;/);
+  assert.match(responsiveCss, /#app-header \.feedback-fab \{[\s\S]*background: #fffaf3 !important;[\s\S]*border: 1\.5px solid rgba\(240, 95, 60, 0\.3\) !important;/);
 });
 
 test("阅读页有底部渐隐和全对庆祝效果", () => {
