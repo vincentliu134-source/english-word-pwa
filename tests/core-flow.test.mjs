@@ -566,6 +566,20 @@ test("挑战页从拼写题切回选择题时彻底隐藏拼写控件", () => {
   assert.match(css, /html body\.mode-game #game-screen \.answer-slots\.hidden,[\s\S]*html body\.mode-game #game-screen \.letter-bank\.hidden,[\s\S]*html body\.mode-game #game-screen \.letter-action-row\.hidden,[\s\S]*display: none !important/);
 });
 
+test("全局反馈入口接入 Google Form 和 Cloudflare Web Analytics", () => {
+  const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
+
+  assert.match(html, /id="feedback-btn"/);
+  assert.match(html, /https:\/\/docs\.google\.com\/forms\/d\/e\/1FAIpQLSfa-4q5k5l8DeZr7op6a6_7zF6BjMfl_J9RM1HWWpugj_-L2g\/viewform\?usp=publish-editor/);
+  assert.match(html, /target="_blank"/);
+  assert.match(html, /https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js/);
+  assert.match(html, /f2dea56a90b642b890357e845f9d2190/);
+
+  const css = fs.readFileSync(path.join(root, "assets/css/enhanced-word-tool.css"), "utf8");
+  assert.match(css, /\.feedback-fab \{[\s\S]*min-height: 36px;[\s\S]*background: rgba\(255, 250, 243, 0\.94\)/);
+  assert.match(css, /\.feedback-fab:hover,[\s\S]*background: #fff;/);
+});
+
 test("阅读页有底部渐隐和全对庆祝效果", () => {
   const js = fs.readFileSync(path.join(root, "assets/js/enhanced-word-tool.js"), "utf8");
   const css = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");

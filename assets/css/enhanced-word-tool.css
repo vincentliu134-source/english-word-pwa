@@ -4601,6 +4601,52 @@ body.theme-playful main.container {
     padding-bottom: 32px !important;
 }
 
+/* Keep the feedback entry available across every screen without consuming
+   space in the learning cards. */
+.feedback-fab {
+    position: fixed;
+    z-index: 30;
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 7px 12px;
+    color: #c96043;
+    background: rgba(255, 250, 243, 0.94);
+    border: 1px solid rgba(240, 95, 60, 0.22);
+    border-radius: 999px;
+    box-shadow: 0 8px 18px -14px rgba(23, 50, 77, 0.7);
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.feedback-fab:hover,
+.feedback-fab:focus-visible {
+    color: #b94f35;
+    background: #fff;
+    box-shadow: 0 10px 20px -13px rgba(23, 50, 77, 0.78);
+    transform: translateY(-2px);
+}
+
+.feedback-fab:focus-visible {
+    outline: 3px solid rgba(240, 95, 60, 0.22);
+    outline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+    .feedback-fab {
+        right: max(10px, env(safe-area-inset-right));
+        bottom: max(10px, env(safe-area-inset-bottom));
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 0.74rem;
+    }
+}
+
 body.theme-playful footer {
     background:
         linear-gradient(135deg, #173f61 0%, #214f72 46%, #1b6780 100%) !important;
