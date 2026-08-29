@@ -4603,22 +4603,42 @@ body.theme-playful main.container {
 
 /* Keep the feedback entry available across every screen without consuming
    space in the learning cards. */
+.word-source-stack {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+body.theme-playful #word-source-indicator,
 .feedback-fab {
-    position: fixed;
-    z-index: 30;
-    right: max(14px, env(safe-area-inset-right));
-    bottom: max(14px, env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    width: 176px;
+    justify-content: center;
+}
+
+.feedback-fab {
+    width: 112px;
+}
+
+body.theme-playful #word-source-indicator {
+    gap: 6px;
+    padding: 0 12px;
+}
+
+.feedback-fab {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    min-height: 36px;
-    padding: 7px 12px;
+    min-height: 44px;
+    padding: 0 14px;
     color: #c96043;
     background: rgba(255, 250, 243, 0.94);
     border: 1px solid rgba(240, 95, 60, 0.22);
     border-radius: 999px;
-    box-shadow: 0 8px 18px -14px rgba(23, 50, 77, 0.7);
-    font-size: 0.78rem;
+    box-shadow: 0 6px 14px -12px rgba(23, 50, 77, 0.7);
+    font-size: 0.84rem;
     font-weight: 900;
     text-decoration: none;
     transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
@@ -4638,12 +4658,26 @@ body.theme-playful main.container {
 }
 
 @media (max-width: 560px) {
+    .word-source-stack {
+        gap: 6px;
+    }
+
+    body.theme-playful #word-source-indicator {
+        min-height: 42px;
+        padding: 0 11px;
+        gap: 6px;
+    }
+
     .feedback-fab {
-        right: max(10px, env(safe-area-inset-right));
-        bottom: max(10px, env(safe-area-inset-bottom));
-        min-height: 34px;
-        padding: 6px 10px;
-        font-size: 0.74rem;
+        min-height: 42px;
+        width: 108px;
+        padding: 0 11px;
+        gap: 5px;
+        font-size: 0.78rem;
+    }
+
+    body.theme-playful #word-source-indicator {
+        width: 140px;
     }
 }
 

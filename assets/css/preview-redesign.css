@@ -4112,3 +4112,65 @@ html body.mode-game #game-screen #feedback.hidden,
 html body.mode-game #game-screen #answer-record.hidden {
   display: none !important;
 }
+
+/* FINAL-HEADER-ACTION-ALIGNMENT: reserve the star meter's row so the source
+   and feedback actions never cover its progress content at tablet widths. */
+@media (min-width: 721px) {
+  #app-header .word-star-meter {
+    min-width: clamp(300px, 32vw, 760px) !important;
+  }
+
+  #app-header .word-source-stack {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+  }
+
+  #app-header > .container > .flex.flex-wrap.items-center.justify-center.gap-3 {
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+    justify-content: flex-end !important;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1200px) {
+  #app-header > .container {
+    flex-wrap: wrap !important;
+    row-gap: 8px !important;
+  }
+
+  #app-header .app-brand-area {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  #app-header .word-star-meter {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  #app-header > .container > .flex.flex-wrap.items-center.justify-center.gap-3 {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    justify-content: flex-end !important;
+  }
+}
+
+@media (max-width: 720px) {
+  #app-header #word-source-indicator,
+  #app-header .feedback-fab {
+    width: 124px !important;
+  }
+
+  #app-header .feedback-fab {
+    width: 108px !important;
+  }
+
+  #app-header #word-source-indicator {
+    display: inline-flex !important;
+  }
+
+  #app-header .feedback-fab {
+    display: inline-flex !important;
+  }
+}

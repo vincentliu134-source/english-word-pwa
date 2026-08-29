@@ -60,11 +60,24 @@
       <div class="flex flex-wrap items-center justify-center gap-3">
         <span class="text-blue-700">⏱</span>
         <span id="timer">5:00</span>
-        <div id="word-source-indicator">
-          <i id="source-icon" class="fa fa-database"></i>
-          <span id="source-text">词库</span>
-          <strong id="current-source">默认单词库</strong>
-          <span id="word-source-status" class="hidden"></span>
+        <div class="word-source-stack">
+          <div id="word-source-indicator">
+            <i id="source-icon" class="fa fa-database"></i>
+            <span id="source-text">词库</span>
+            <strong id="current-source">默认单词库</strong>
+            <span id="word-source-status" class="hidden"></span>
+          </div>
+          <a
+            id="feedback-btn"
+            class="feedback-fab"
+            href="https://v.wjx.cn/vm/OUtvHcZ.aspx"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="打开反馈建议表单"
+          >
+            <i class="fa fa-commenting-o" aria-hidden="true"></i>
+            <span>反馈建议</span>
+          </a>
         </div>
       </div>
     </div>
@@ -483,18 +496,6 @@
       </div>
     </section>
   </main>
-
-  <a
-    id="feedback-btn"
-    class="feedback-fab"
-    href="https://docs.google.com/forms/d/e/1FAIpQLSfa-4q5k5l8DeZr7op6a6_7zF6BjMfl_J9RM1HWWpugj_-L2g/viewform?usp=publish-editor"
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label="打开反馈建议表单"
-  >
-    <i class="fa fa-commenting-o" aria-hidden="true"></i>
-    <span>反馈建议</span>
-  </a>
 
   <div id="image-modal" class="modal screen-hidden">
     <div class="modal-content">

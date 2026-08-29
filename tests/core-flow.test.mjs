@@ -570,14 +570,21 @@ test("全局反馈入口接入 Google Form 和 Cloudflare Web Analytics", () => 
   const html = fs.readFileSync(path.join(root, "enhanced-word-tool.html"), "utf8");
 
   assert.match(html, /id="feedback-btn"/);
-  assert.match(html, /https:\/\/docs\.google\.com\/forms\/d\/e\/1FAIpQLSfa-4q5k5l8DeZr7op6a6_7zF6BjMfl_J9RM1HWWpugj_-L2g\/viewform\?usp=publish-editor/);
+  assert.match(html, /https:\/\/v\.wjx\.cn\/vm\/OUtvHcZ\.aspx/);
   assert.match(html, /target="_blank"/);
   assert.match(html, /https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js/);
   assert.match(html, /f2dea56a90b642b890357e845f9d2190/);
 
   const css = fs.readFileSync(path.join(root, "assets/css/enhanced-word-tool.css"), "utf8");
-  assert.match(css, /\.feedback-fab \{[\s\S]*min-height: 36px;[\s\S]*background: rgba\(255, 250, 243, 0\.94\)/);
+  const responsiveCss = fs.readFileSync(path.join(root, "assets/css/preview-redesign.css"), "utf8");
+  assert.match(css, /\.word-source-stack \{[\s\S]*flex-direction: row;[\s\S]*justify-content: flex-end;/);
+  assert.match(css, /body\.theme-playful #word-source-indicator,[\s\S]*\.feedback-fab \{[\s\S]*width: 176px;[\s\S]*justify-content: center;/);
+  assert.match(css, /\.feedback-fab \{[\s\S]*width: 112px;[\s\S]*min-height: 44px;[\s\S]*padding: 0 14px;[\s\S]*background: rgba\(255, 250, 243, 0\.94\)/);
+  assert.match(css, /body\.theme-playful #word-source-indicator \{[\s\S]*min-height: 42px;[\s\S]*padding: 0 11px;/);
   assert.match(css, /\.feedback-fab:hover,[\s\S]*background: #fff;/);
+  assert.match(responsiveCss, /FINAL-HEADER-ACTION-ALIGNMENT/);
+  assert.match(responsiveCss, /@media \(min-width: 721px\) and \(max-width: 1200px\) \{[\s\S]*\.word-star-meter \{[\s\S]*width: 100% !important;[\s\S]*min-width: 0 !important;/);
+  assert.match(responsiveCss, /@media \(max-width: 720px\) \{[\s\S]*#app-header #word-source-indicator,[\s\S]*#app-header \.feedback-fab \{[\s\S]*width: 124px !important;/);
 });
 
 test("阅读页有底部渐隐和全对庆祝效果", () => {
